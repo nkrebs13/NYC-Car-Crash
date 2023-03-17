@@ -11,8 +11,8 @@ object AndroidX {
 
     const val ACTIVITY_COMPOSE = "androidx.activity:activity-compose:1.3.1"
 
-    const val VERSION_COMPOSE = "1.2.0"
-    const val VERSION_COMPOSE_COMPILER = "1.2.0"
+    const val VERSION_COMPOSE = "1.3.3"
+    const val VERSION_COMPOSE_COMPILER = "1.4.3"
     const val COMPOSE_UI = "androidx.compose.ui:ui:$VERSION_COMPOSE"
     const val COMPOSE_UI_PREVIEW = "androidx.compose.ui:ui-tooling-preview:$VERSION_COMPOSE"
     // should be debug dependency only
@@ -20,7 +20,7 @@ object AndroidX {
     // should be debug dependency only
     const val COMPOSE_UI_TEST_MANIFEST = "androidx.compose.ui:ui-tooling:$VERSION_COMPOSE"
 
-    const val MATERIAL3 = "androidx.compose.material3:material3:1.0.0-alpha11"
+    const val MATERIAL3 = "androidx.compose.material3:material3:1.0.1"
 }
 
 object Testing {
