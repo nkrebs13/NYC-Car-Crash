@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     kotlin("android")
+    id("kotlinx-serialization")
 }
 
 android {
@@ -56,6 +57,7 @@ dependencies {
     implementation(AndroidX.COMPOSE_UI)
     implementation(AndroidX.COMPOSE_UI_PREVIEW)
     implementation(AndroidX.MATERIAL3)
+    implementation(Kotlin.SERIALIZATION)
     testImplementation(Testing.JUNIT)
     androidTestImplementation(Testing.JUNIT_EXT)
     androidTestImplementation(Testing.ESPRESSO)
