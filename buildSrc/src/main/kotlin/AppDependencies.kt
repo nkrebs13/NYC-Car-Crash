@@ -26,6 +26,16 @@ object AndroidX {
 object Kotlin {
     const val VERSION = "1.8.10"
     const val SERIALIZATION = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1"
+    const val COROUTINES = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
+    const val COROUTINES_ANDROID = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+}
+
+object Networking {
+    const val VERSION_KTOR = "2.2.4"
+    const val KTOR_CORE = "io.ktor:ktor-client-core:$VERSION_KTOR"
+    const val KTOR_CLIENT = "io.ktor:ktor-client-okhttp:$VERSION_KTOR"
+    const val KTOR_CONTENT_NEGOTIATION = "io.ktor:ktor-client-content-negotiation:$VERSION_KTOR"
+    const val KTOR_SERIALIZATION = "io.ktor:ktor-serialization-kotlinx-json:$VERSION_KTOR"
 }
 
 object Testing {
