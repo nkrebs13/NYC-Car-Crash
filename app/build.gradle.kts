@@ -1,8 +1,28 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlinx-serialization")
 }
+
+val appProperties = Properties().apply {
+    load(FileInputStream(File("${rootProject.rootDir}/app", "app.properties")))
+}
+
+val apiKey: String = (appProperties["api_key"] as? String) ?: ""
+if(apiKey.isEmpty()) {
+    throw IllegalStateException("You must input a valid api_key to the app.properties file. See " +
+            "the README for more information")
+}
+
+val mapKey: String = (appProperties["map_key"] as? String) ?: ""
+// TODO - Future commit
+//if(mapKey.isEmpty()) {
+//    throw IllegalStateException("You must input a valid map_key to the app.properties file. See " +
+//            "the README for more information")
+//}
 
 android {
     namespace = "com.nathankrebs.nyccrash"
@@ -19,6 +39,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        resValue("string", "api_key", apiKey)
     }
 
     buildTypes {
@@ -62,6 +84,7 @@ dependencies {
     implementation(Kotlin.COROUTINES_ANDROID)
     implementation(Networking.KTOR_CORE)
     implementation(Networking.KTOR_CLIENT)
+    implementation(Networking.KTOR_LOGGING)
     implementation(Networking.KTOR_CONTENT_NEGOTIATION)
     implementation(Networking.KTOR_SERIALIZATION)
     testImplementation(Testing.JUNIT)

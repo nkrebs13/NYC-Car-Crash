@@ -8,13 +8,12 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class CarCrashItem(
-    @SerialName("crash_date") val crashDate: Float,
+    @SerialName("crash_date") val crashDate: String,
     @SerialName("crash_time") val crashTime: String,
-    val borough: String,
-    @SerialName("zip_code") val zipCode: String,
-    val latitude: Double,
-    val longitude: Double,
+    val borough: String? = null,
+    @SerialName("zip_code") val zipCode: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     @SerialName("number_of_persons_injured") val numberOfPersonsInjured: Int,
     @SerialName("number_of_persons_killed") val numberOfPersonsKilled: Int,
-    val collisionId: Int,
 )
