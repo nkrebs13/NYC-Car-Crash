@@ -23,6 +23,10 @@ object AndroidX {
     const val MATERIAL3 = "androidx.compose.material3:material3:1.0.1"
 }
 
+object Kotlin {
+    const val VERSION = "1.8.10"
+}
+
 object Testing {
     const val JUNIT = "junit:junit:4.13.2"
     const val JUNIT_EXT = "androidx.test.ext:junit:1.1.5"
