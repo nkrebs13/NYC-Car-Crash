@@ -18,3 +18,4 @@
 */keystore-dev.properties
 */.apk
 */.aab
+/app/app.properties
