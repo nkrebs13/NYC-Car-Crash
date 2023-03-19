@@ -87,6 +87,8 @@ dependencies {
     implementation(Networking.KTOR_LOGGING)
     implementation(Networking.KTOR_CONTENT_NEGOTIATION)
     implementation(Networking.KTOR_SERIALIZATION)
+    implementation(Koin.CORE)
+    implementation(Koin.COMPOSE)
     testImplementation(Testing.JUNIT)
     androidTestImplementation(Testing.JUNIT_EXT)
     androidTestImplementation(Testing.ESPRESSO)

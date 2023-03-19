@@ -7,27 +7,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.nathankrebs.nyccrash.network.CarCrashNetworkDataSourceImpl
-import com.nathankrebs.nyccrash.network.NetworkingSingleton.AppHttpClient
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
-import com.nathankrebs.nyccrash.repository.CarCrashRepositoryImpl
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
 
-    private val repository: CarCrashRepository by lazy(LazyThreadSafetyMode.NONE) {
-        CarCrashRepositoryImpl(
-            CarCrashNetworkDataSourceImpl(
-                AppHttpClient,
-                getString(R.string.api_key)
-            )
-        )
-    }
+    private val repository: CarCrashRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
