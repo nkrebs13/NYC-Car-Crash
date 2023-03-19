@@ -2,7 +2,7 @@ package com.nathankrebs.nyccrash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nathankrebs.nyccrash.network.CarCrashApiItem
+import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +28,7 @@ class CarCrashViewModel(
             )
 
     data class UiState(
-        val carCrashes: List<CarCrashApiItem>,
+        val carCrashes: List<CarCrashItem>,
         val status: UiStatus,
     ) {
         enum class UiStatus {

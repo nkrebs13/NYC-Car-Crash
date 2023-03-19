@@ -1,9 +1,9 @@
 package com.nathankrebs.nyccrash.repository
 
-import com.nathankrebs.nyccrash.network.CarCrashApiItem
+import com.nathankrebs.nyccrash.model.CarCrashItem
 import kotlinx.coroutines.flow.Flow
 
 interface CarCrashRepository {
 
-    val carCrashes: Flow<List<CarCrashApiItem>>
+    val carCrashes: Flow<List<CarCrashItem>>
 }
