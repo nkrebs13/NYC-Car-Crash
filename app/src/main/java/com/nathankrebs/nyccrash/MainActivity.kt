@@ -9,13 +9,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
-import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
 
-    private val repository: CarCrashRepository by inject()
+    private val viewModel: CarCrashViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,8 +25,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val greetingState = repository.carCrashes.collectAsState(initial = emptyList())
-                    Text(text = greetingState.value.toString())
+                    val carCrashState = viewModel.uiState
+                        .collectAsState(initial = CarCrashViewModel.UiState.INITIAL)
+                    Text(text = carCrashState.value.toString())
                 }
             }
         }

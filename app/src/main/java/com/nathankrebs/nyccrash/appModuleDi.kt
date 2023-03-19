@@ -7,6 +7,7 @@ import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.repository.CarCrashRepositoryImpl
 import io.ktor.client.HttpClient
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val appModuleDi = module {
@@ -24,6 +25,12 @@ val appModuleDi = module {
     single<CarCrashRepository> {
         CarCrashRepositoryImpl(
             carCrashNetworkDataSource = get(),
+        )
+    }
+
+    viewModel {
+        CarCrashViewModel(
+            carCrashRepository = get(),
         )
     }
 }

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.onSubscription
 
 class CarCrashRepositoryImpl(
     private val carCrashNetworkDataSource: CarCrashNetworkDataSource,
-): CarCrashRepository {
+) : CarCrashRepository {
 
     private val _carCrashes: MutableSharedFlow<List<CarCrashApiItem>> =
         MutableSharedFlow(replay = 1)
@@ -23,7 +23,7 @@ class CarCrashRepositoryImpl(
     override val carCrashes: Flow<List<CarCrashApiItem>> = _carCrashes
         // if we don't have data yet on subscription, then request it
         .onSubscription {
-            if(_carCrashes.weDoNotHaveDataYet) {
+            if (_carCrashes.weDoNotHaveDataYet) {
                 _carCrashes.tryEmit(carCrashNetworkDataSource.getCarCrashes())
             }
         }
