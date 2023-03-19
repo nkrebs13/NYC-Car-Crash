@@ -6,10 +6,10 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 
-class CarCrashApiImpl(
+class CarCrashNetworkDataSourceImpl(
     private val httpClient: HttpClient,
     private val apiKey: String,
-) : CarCrashApi {
+) : CarCrashNetworkDataSource {
 
     override suspend fun getCarCrashes(): List<CarCrashApiItem> =
         httpClient.makeCarCrashGET {

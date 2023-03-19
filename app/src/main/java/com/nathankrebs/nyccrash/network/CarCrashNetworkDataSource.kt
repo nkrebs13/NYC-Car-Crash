@@ -1,5 +1,5 @@
 package com.nathankrebs.nyccrash.network
 
-interface CarCrashApi {
+interface CarCrashNetworkDataSource {
     suspend fun getCarCrashes(): List<CarCrashApiItem>
 }
