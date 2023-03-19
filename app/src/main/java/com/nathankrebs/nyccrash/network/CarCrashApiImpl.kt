@@ -1,6 +1,5 @@
 package com.nathankrebs.nyccrash.network
 
-import com.nathankrebs.nyccrash.model.CarCrashItem
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
@@ -12,10 +11,10 @@ class CarCrashApiImpl(
     private val apiKey: String,
 ) : CarCrashApi {
 
-    override suspend fun getCarCrashes(): List<CarCrashItem> =
+    override suspend fun getCarCrashes(): List<CarCrashApiItem> =
         httpClient.makeCarCrashGET {
             url {
-                parameters.append("\$limit", "5000")
+                parameters.append("\$limit", "5")
                 parameters.append("\$order", "crash_date DESC")
             }
         }.body()
