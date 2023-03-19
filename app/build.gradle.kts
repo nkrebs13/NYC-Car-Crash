@@ -89,11 +89,14 @@ dependencies {
     implementation(Networking.KTOR_SERIALIZATION)
     implementation(Koin.CORE)
     implementation(Koin.COMPOSE)
-    testImplementation(Testing.JUNIT)
-    androidTestImplementation(Testing.JUNIT_EXT)
-    androidTestImplementation(Testing.ESPRESSO)
-    androidTestImplementation(Testing.JUNIT_UI_COMPOSE)
+
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TEST_MANIFEST)
+
+    testImplementation(Testing.JUNIT)
+
+    androidTestImplementation(Testing.JUNIT_EXT)
+    androidTestImplementation(Testing.ESPRESSO)
+    androidTestImplementation(Testing.JUNIT_UI_COMPOSE)
 }
