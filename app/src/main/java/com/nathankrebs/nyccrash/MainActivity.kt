@@ -11,7 +11,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.nathankrebs.nyccrash.NetworkingSingleton.AppHttpClient
+import com.nathankrebs.nyccrash.network.CarCrashNetworkDataSourceImpl
+import com.nathankrebs.nyccrash.network.NetworkingSingleton.AppHttpClient
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 
 class MainActivity : ComponentActivity() {
@@ -26,7 +27,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val greetingState = remember { mutableStateOf("") }
                     LaunchedEffect(key1 = null) {
-                        val carCrashes = CarCrashApiImpl(
+                        val carCrashes = CarCrashNetworkDataSourceImpl(
                             AppHttpClient,
                             getString(R.string.api_key)
                         ).getCarCrashes()

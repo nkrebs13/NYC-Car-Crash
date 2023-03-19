@@ -1,4 +1,4 @@
-package com.nathankrebs.nyccrash
+package com.nathankrebs.nyccrash.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

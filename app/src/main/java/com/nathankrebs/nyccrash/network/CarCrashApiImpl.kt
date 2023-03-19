@@ -1,5 +1,6 @@
-package com.nathankrebs.nyccrash
+package com.nathankrebs.nyccrash.network
 
+import com.nathankrebs.nyccrash.model.CarCrashItem
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
