@@ -8,14 +8,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.nathankrebs.nyccrash.network.CarCrashNetworkDataSourceImpl
 import com.nathankrebs.nyccrash.network.NetworkingSingleton.AppHttpClient
+import com.nathankrebs.nyccrash.repository.CarCrashRepository
+import com.nathankrebs.nyccrash.repository.CarCrashRepositoryImpl
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val repository: CarCrashRepository by lazy(LazyThreadSafetyMode.NONE) {
+        CarCrashRepositoryImpl(
+            CarCrashNetworkDataSourceImpl(
+                AppHttpClient,
+                getString(R.string.api_key)
+            )
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -25,16 +38,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val greetingState = remember { mutableStateOf("") }
-                    LaunchedEffect(key1 = null) {
-                        val carCrashes = CarCrashNetworkDataSourceImpl(
-                            AppHttpClient,
-                            getString(R.string.api_key)
-                        ).getCarCrashes()
-                        greetingState.value = carCrashes.toString()
-                    }
-
-                    Text(text = greetingState.value)
+                    val greetingState = repository.carCrashes.collectAsState(initial = emptyList())
+                    Text(text = greetingState.value.toString())
                 }
             }
         }
