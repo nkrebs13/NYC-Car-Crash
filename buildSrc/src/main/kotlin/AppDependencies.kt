@@ -14,6 +14,7 @@ object AndroidX {
     const val VERSION_COMPOSE = "1.3.3"
     const val VERSION_COMPOSE_COMPILER = "1.4.3"
     const val COMPOSE_UI = "androidx.compose.ui:ui:$VERSION_COMPOSE"
+    const val COMPOSE_MATERIAL = "androidx.compose.material:material:1.3.1"
     const val COMPOSE_UI_PREVIEW = "androidx.compose.ui:ui-tooling-preview:$VERSION_COMPOSE"
     // should be debug dependency only
     const val COMPOSE_UI_TOOLING = "androidx.compose.ui:ui-tooling:$VERSION_COMPOSE"
@@ -26,6 +27,9 @@ object AndroidX {
     const val ROOM_RUNTIME = "androidx.room:room-runtime:$VERSION_ROOM"
     const val ROOM_KTX = "androidx.room:room-ktx:$VERSION_ROOM"
     const val ROOM_COMPILER = "androidx.room:room-compiler:$VERSION_ROOM"
+
+    const val GOOGLE_MAPS_COMPOSE = "com.google.maps.android:maps-compose:2.11.2"
+    const val GOOGLE_PLAY_SERVICES_MAPS = "com.google.android.gms:play-services-maps:18.1.0"
 }
 
 object Kotlin {

@@ -19,11 +19,10 @@ if(apiKey.isEmpty()) {
 }
 
 val mapKey: String = (appProperties["map_key"] as? String) ?: ""
-// TODO - Future commit
-//if(mapKey.isEmpty()) {
-//    throw IllegalStateException("You must input a valid map_key to the app.properties file. See " +
-//            "the README for more information")
-//}
+if(mapKey.isEmpty()) {
+    throw IllegalStateException("You must input a valid map_key to the app.properties file. See " +
+            "the README for more information")
+}
 
 android {
     namespace = "com.nathankrebs.nyccrash"
@@ -42,6 +41,7 @@ android {
         }
 
         resValue("string", "api_key", apiKey)
+        manifestPlaceholders.put("MAP_KEY", mapKey)
     }
 
     buildTypes {
@@ -78,10 +78,13 @@ dependencies {
     implementation(AndroidX.LIFECYCLE_RUNTIME)
     implementation(AndroidX.ACTIVITY_COMPOSE)
     implementation(AndroidX.COMPOSE_UI)
+    implementation(AndroidX.COMPOSE_MATERIAL)
     implementation(AndroidX.COMPOSE_UI_PREVIEW)
     implementation(AndroidX.MATERIAL3)
     implementation(AndroidX.ROOM_RUNTIME)
     implementation(AndroidX.ROOM_KTX)
+    implementation(AndroidX.GOOGLE_MAPS_COMPOSE)
+    implementation(AndroidX.GOOGLE_PLAY_SERVICES_MAPS)
     implementation(Kotlin.SERIALIZATION)
     implementation(Kotlin.COROUTINES)
     implementation(Kotlin.COROUTINES_ANDROID)
