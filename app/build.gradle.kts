@@ -85,6 +85,7 @@ dependencies {
     implementation(AndroidX.ROOM_KTX)
     implementation(AndroidX.GOOGLE_MAPS_COMPOSE)
     implementation(AndroidX.GOOGLE_PLAY_SERVICES_MAPS)
+    implementation(AndroidX.GOOGLE_MAPS_UTILS)
     implementation(Kotlin.SERIALIZATION)
     implementation(Kotlin.COROUTINES)
     implementation(Kotlin.COROUTINES_ANDROID)

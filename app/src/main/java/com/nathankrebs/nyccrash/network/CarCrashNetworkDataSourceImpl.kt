@@ -14,7 +14,7 @@ class CarCrashNetworkDataSourceImpl(
     override suspend fun getCarCrashes(): List<CarCrashApiItem> =
         httpClient.makeCarCrashGET {
             url {
-                parameters.append("\$limit", "5")
+                parameters.append("\$limit", "5000")
                 parameters.append("\$order", "crash_date DESC")
             }
         }.body()

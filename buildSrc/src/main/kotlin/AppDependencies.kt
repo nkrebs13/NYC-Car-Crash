@@ -30,6 +30,7 @@ object AndroidX {
 
     const val GOOGLE_MAPS_COMPOSE = "com.google.maps.android:maps-compose:2.11.2"
     const val GOOGLE_PLAY_SERVICES_MAPS = "com.google.android.gms:play-services-maps:18.1.0"
+    const val GOOGLE_MAPS_UTILS = "com.google.maps.android:maps-utils-ktx:3.4.0"
 }
 
 object Kotlin {

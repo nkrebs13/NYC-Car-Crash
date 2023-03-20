@@ -3,12 +3,21 @@ package com.nathankrebs.nyccrash.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.BottomSheetScaffold
+import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.google.android.gms.maps.model.LatLng
 import com.nathankrebs.nyccrash.ui.compose.AppMap
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -22,15 +31,31 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NYCCrashTheme {
+                val carCrashState = viewModel.uiState
+                    .collectAsState(initial = CarCrashViewModel.UiState.INITIAL)
+
+                val scaffoldState = rememberBottomSheetScaffoldState(
+                    bottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
+                )
+
                 BottomSheetScaffold(
                     modifier = Modifier.fillMaxSize(),
+                    scaffoldState = scaffoldState,
                     sheetContent = {
-                        val carCrashState = viewModel.uiState
-                            .collectAsState(initial = CarCrashViewModel.UiState.INITIAL)
-                        Text(text = carCrashState.value.toString())
+                        Column(
+                            modifier = Modifier
+                                .heightIn(max = 64.dp)
+                                .verticalScroll(state = rememberScrollState()),
+                        ) {
+                            Text(text = carCrashState.value.toString())
+                        }
                     },
                     content = {
-                        AppMap(modifier = Modifier.fillMaxSize())
+                        AppMap(
+                            modifier = Modifier.fillMaxSize(),
+                            latLngs = carCrashState.value.carCrashes
+                                .map { LatLng(it.latitude, it.longitude) }
+                        )
                     }
                 )
             }
