@@ -1,4 +1,4 @@
-package com.nathankrebs.nyccrash
+package com.nathankrebs.nyccrash.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

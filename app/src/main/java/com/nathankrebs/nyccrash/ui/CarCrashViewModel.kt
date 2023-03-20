@@ -1,4 +1,4 @@
-package com.nathankrebs.nyccrash
+package com.nathankrebs.nyccrash.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -5,6 +5,7 @@ import com.nathankrebs.nyccrash.network.CarCrashNetworkDataSourceImpl
 import com.nathankrebs.nyccrash.network.NetworkingSingleton
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.repository.CarCrashRepositoryImpl
+import com.nathankrebs.nyccrash.ui.CarCrashViewModel
 import io.ktor.client.HttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
