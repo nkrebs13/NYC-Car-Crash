@@ -21,6 +21,11 @@ object AndroidX {
     const val COMPOSE_UI_TEST_MANIFEST = "androidx.compose.ui:ui-tooling:$VERSION_COMPOSE"
 
     const val MATERIAL3 = "androidx.compose.material3:material3:1.0.1"
+
+    const val VERSION_ROOM = "2.5.0"
+    const val ROOM_RUNTIME = "androidx.room:room-runtime:$VERSION_ROOM"
+    const val ROOM_KTX = "androidx.room:room-ktx:$VERSION_ROOM"
+    const val ROOM_COMPILER = "androidx.room:room-compiler:$VERSION_ROOM"
 }
 
 object Kotlin {

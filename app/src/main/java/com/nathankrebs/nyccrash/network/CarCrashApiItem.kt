@@ -30,7 +30,7 @@ data class CarCrashApiItem(
     @SerialName("contributing_factor_vehicle_3") val contributingFactorVehicle3: String? = null,
     @SerialName("contributing_factor_vehicle_4") val contributingFactorVehicle4: String? = null,
     @SerialName("contributing_factor_vehicle_5") val contributingFactorVehicle5: String? = null,
-    @SerialName("collision_id") val collisionId: String,
+    @SerialName("collision_id") val collisionId: Int,
     @SerialName("vehicle_type_code1") val vehicleTypeCode1: String? = null,
     @SerialName("vehicle_type_code2") val vehicleTypeCode2: String? = null,
     @SerialName("vehicle_type_code3") val vehicleTypeCode3: String? = null,

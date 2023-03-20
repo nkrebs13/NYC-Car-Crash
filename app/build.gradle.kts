@@ -5,6 +5,7 @@ plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlinx-serialization")
+    id("com.google.devtools.ksp")
 }
 
 val appProperties = Properties().apply {
@@ -79,6 +80,8 @@ dependencies {
     implementation(AndroidX.COMPOSE_UI)
     implementation(AndroidX.COMPOSE_UI_PREVIEW)
     implementation(AndroidX.MATERIAL3)
+    implementation(AndroidX.ROOM_RUNTIME)
+    implementation(AndroidX.ROOM_KTX)
     implementation(Kotlin.SERIALIZATION)
     implementation(Kotlin.COROUTINES)
     implementation(Kotlin.COROUTINES_ANDROID)
@@ -93,6 +96,8 @@ dependencies {
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TEST_MANIFEST)
+
+    ksp(AndroidX.ROOM_COMPILER)
 
     testImplementation(Testing.JUNIT)
 
