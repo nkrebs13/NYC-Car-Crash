@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
+import com.nathankrebs.nyccrash.sdfISO8601
 import java.text.DateFormatSymbols
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -66,7 +66,7 @@ class CarCrashViewModel(
     private fun getMostDangerousMonth(carCrashes: List<CarCrashItem>): String {
         val months = IntArray(12)
         // map date string (ISO8601) to Date, iterate, and then populate array indexed by month
-        carCrashes.mapNotNull { simpleDateFormat.parse(it.date) }
+        carCrashes.mapNotNull { sdfISO8601.parse(it.date) }
             .forEach { date ->
                 val calendar = Calendar.getInstance()
                 calendar.time = date
@@ -109,12 +109,5 @@ class CarCrashViewModel(
                 status = UiStatus.Loading,
             )
         }
-    }
-
-    companion object {
-        /**
-         * Used to parse out the date in [CarCrashItem.date]
-         */
-        private val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'00:00:00.000", Locale.getDefault())
     }
 }

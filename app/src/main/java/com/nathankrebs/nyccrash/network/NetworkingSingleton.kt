@@ -34,7 +34,7 @@ object NetworkingSingleton {
         }
 
         install(Logging) {
-            level = LogLevel.ALL
+            level = LogLevel.INFO
             logger = object : Logger {
                 override fun log(message: String) {
                     Log.d("API", message)
