@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.maps.model.LatLng
 import com.nathankrebs.nyccrash.ui.compose.AppMap
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -53,8 +52,7 @@ class MainActivity : ComponentActivity() {
                     content = {
                         AppMap(
                             modifier = Modifier.fillMaxSize(),
-                            latLngs = carCrashState.value.carCrashes
-                                .map { LatLng(it.latitude, it.longitude) }
+                            latLngs = carCrashState.value.latLngs,
                         )
                     }
                 )
