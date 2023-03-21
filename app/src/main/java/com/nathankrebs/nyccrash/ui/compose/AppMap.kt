@@ -7,6 +7,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -14,7 +15,7 @@ import com.google.maps.android.compose.rememberTileOverlayState
 import com.google.maps.android.heatmaps.HeatmapTileProvider
 
 private val cameraPositionState = CameraPosition.fromLatLngZoom(
-    LatLng(40.7128, -74.0060), 10f
+    LatLng(40.69, -73.89194), 10f
 )
 
 private val mapUiSettings = MapUiSettings(
@@ -23,15 +24,16 @@ private val mapUiSettings = MapUiSettings(
     mapToolbarEnabled = true,
     myLocationButtonEnabled = false,
     rotationGesturesEnabled = false,
-    scrollGesturesEnabled = false,
+    scrollGesturesEnabled = true,
     scrollGesturesEnabledDuringRotateOrZoom = false,
     tiltGesturesEnabled = false,
     zoomControlsEnabled = false,
-    zoomGesturesEnabled = false,
+    zoomGesturesEnabled = true,
 )
 
 private val mapProperties = MapProperties(
-    isMyLocationEnabled = false
+    isMyLocationEnabled = false,
+    mapType = MapType.NORMAL
 )
 
 @Composable
