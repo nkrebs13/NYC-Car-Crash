@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.BottomSheetScaffold
@@ -18,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.nathankrebs.nyccrash.ui.compose.AppMap
+import com.nathankrebs.nyccrash.ui.compose.HourlyGraph
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -43,9 +46,18 @@ class MainActivity : ComponentActivity() {
                     sheetContent = {
                         Column(
                             modifier = Modifier
-                                .heightIn(max = 64.dp)
                                 .verticalScroll(state = rememberScrollState()),
                         ) {
+                            if(carCrashState.value.status == CarCrashViewModel.UiState.UiStatus.Data) {
+                                HourlyGraph(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(256.dp)
+                                        .padding(16.dp),
+                                    hourlyEntries = carCrashState.value.crashesByTime.toList()
+                                )
+                            }
+
                             Text(text = carCrashState.value.toString())
                         }
                     },

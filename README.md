@@ -17,7 +17,8 @@ guidelines.
 - Koin
 - Coroutines + Flow
 - Ktor
-- Android 
+- Android
+- MPAndroidChart
 
 ### Known issues
 These is currently a known issue with the TileOverlay colors. It is believed by the developer 

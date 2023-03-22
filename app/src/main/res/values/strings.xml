@@ -1,3 +1,31 @@
 <resources>
     <string name="app_name">NYC Crash</string>
+
+    <string name="chart_description">Crashes by hour in visible region</string>
+    <string name="chart_data_label">Crashes</string>
+    <string name="chart_hour_0">12am</string>
+    <string name="chart_hour_1">1am</string>
+    <string name="chart_hour_2">2am</string>
+    <string name="chart_hour_3">3am</string>
+    <string name="chart_hour_4">4am</string>
+    <string name="chart_hour_5">5am</string>
+    <string name="chart_hour_6">6am</string>
+    <string name="chart_hour_7">7am</string>
+    <string name="chart_hour_8">8am</string>
+    <string name="chart_hour_9">9am</string>
+    <string name="chart_hour_10">10am</string>
+    <string name="chart_hour_11">11am</string>
+    <string name="chart_hour_12">12pm</string>
+    <string name="chart_hour_13">1pm</string>
+    <string name="chart_hour_14">2pm</string>
+    <string name="chart_hour_15">3pm</string>
+    <string name="chart_hour_16">4pm</string>
+    <string name="chart_hour_17">5pm</string>
+    <string name="chart_hour_18">6pm</string>
+    <string name="chart_hour_19">7pm</string>
+    <string name="chart_hour_20">8pm</string>
+    <string name="chart_hour_21">9pm</string>
+    <string name="chart_hour_22">10pm</string>
+    <string name="chart_hour_23">11pm</string>
+    <string name="chart_hour_24">12am</string>
 </resources>
