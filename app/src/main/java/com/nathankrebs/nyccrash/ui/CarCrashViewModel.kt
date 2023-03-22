@@ -3,20 +3,42 @@ package com.nathankrebs.nyccrash.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.VisibleRegion
 import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.sdfISO8601
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormatSymbols
 import java.util.*
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.util.Locale.filter
 
 class CarCrashViewModel(
     private val carCrashRepository: CarCrashRepository,
 ) : ViewModel() {
+
+    /**
+     * Keeps track of the current map visible region.
+     *
+     * See [onMapVisibleRegionChange]
+     */
+    private val currentVisibleRegion: MutableStateFlow<VisibleRegion?> = MutableStateFlow(null)
+
+    /**
+     * Debounce time for [currentVisibleRegion]. We don't want to debounce initially, so this is
+     * 0 and will be set to a non-zero value in the future for subsequent emissions of
+     * [currentVisibleRegion].
+     */
+    private var currentVisibleRegionTimeBuffer = 0L
 
     /**
      * A Flow of the [UiState] of the application to be subscribed to. Updates will be published
@@ -24,7 +46,23 @@ class CarCrashViewModel(
      */
     val uiState: StateFlow<UiState> =
         carCrashRepository.carCrashes
-            .map { newCarCrashes ->
+            .combine(
+                currentVisibleRegion.debounce(currentVisibleRegionTimeBuffer)
+            ) { newCarCrashes, newLayoutBounds ->
+                // update this value now that we actually have our first combination of values
+                currentVisibleRegionTimeBuffer = 1000
+
+                // if we have no layout bounds, return all
+                // if we have layout bounds, filter by what is visible
+                when {
+                    newLayoutBounds == null -> newCarCrashes
+                    else -> {
+                        newCarCrashes.filter {
+                            newLayoutBounds.latLngBounds.contains(LatLng(it.latitude, it.longitude))
+                        }
+                    }
+                }
+            }.map { newCarCrashes ->
                 UiState(
                     crashesByTime = getTimes(newCarCrashes),
                     monthWithMostCrashes = getMostDangerousMonth(newCarCrashes),
@@ -38,6 +76,15 @@ class CarCrashViewModel(
                 started = SharingStarted.WhileSubscribed(1_000),
                 initialValue = UiState.INITIAL
             )
+
+    /**
+     * When the map UI moves, this should be invoked with the map's current [VisibleRegion].
+     */
+    fun onMapVisibleRegionChange(visibleRegion: VisibleRegion) {
+        viewModelScope.launch {
+            currentVisibleRegion.emit(visibleRegion)
+        }
+    }
 
     /**
      * Returns an IntArray where each element represents an hour. The value is the number of

@@ -53,6 +53,9 @@ class MainActivity : ComponentActivity() {
                         AppMap(
                             modifier = Modifier.fillMaxSize(),
                             latLngs = carCrashState.value.latLngs,
+                            onCameraMoved = { visibleRegion ->
+                                viewModel.onMapVisibleRegionChange(visibleRegion)
+                            },
                         )
                     }
                 )
