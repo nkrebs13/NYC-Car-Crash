@@ -1,5 +1,5 @@
 object AppVersions {
-    const val MIN = 24
+    const val MIN = 26
     const val TARGET = 33
     const val COMPILE = 33
 }
