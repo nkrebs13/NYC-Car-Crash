@@ -3,7 +3,6 @@ package com.nathankrebs.nyccrash.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.VisibleRegion
 import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
@@ -17,10 +16,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Locale.filter
 
 class CarCrashViewModel(
     private val carCrashRepository: CarCrashRepository,
@@ -62,7 +59,8 @@ class CarCrashViewModel(
                         }
                     }
                 }
-            }.map { newCarCrashes ->
+            }
+            .map { newCarCrashes ->
                 UiState(
                     crashesByTime = getTimes(newCarCrashes),
                     monthWithMostCrashes = getMostDangerousMonth(newCarCrashes),
