@@ -1,104 +1,92 @@
 package com.nathankrebs.nyccrash.ui.compose
 
+import android.annotation.SuppressLint
+import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.FragmentActivity
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.TileProvider
+import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.VisibleRegion
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.TileOverlay
-import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberTileOverlayState
 import com.google.maps.android.heatmaps.HeatmapTileProvider
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
+import com.nathankrebs.nyccrash.R
 
-private val cameraPositionState = CameraPosition.fromLatLngZoom(
-    LatLng(40.69, -73.89194), 10f
-)
-
-private val mapUiSettings = MapUiSettings(
-    compassEnabled = false,
-    indoorLevelPickerEnabled = false,
-    mapToolbarEnabled = true,
-    myLocationButtonEnabled = false,
-    rotationGesturesEnabled = false,
-    scrollGesturesEnabled = true,
-    scrollGesturesEnabledDuringRotateOrZoom = false,
-    tiltGesturesEnabled = false,
-    zoomControlsEnabled = false,
-    zoomGesturesEnabled = true,
-)
-
-private val mapProperties = MapProperties(
-    isMyLocationEnabled = false,
-    mapType = MapType.NORMAL
-)
-
+@SuppressLint("MissingPermission")
 @Composable
 fun AppMap(
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     latLngs: List<LatLng>,
     onCameraMoved: (VisibleRegion) -> Unit,
 ) {
-    val cameraPositionState = rememberCameraPositionState {
-        position = cameraPositionState
+    val heatmapTileProvider: MutableState<HeatmapTileProvider?> = remember {
+        mutableStateOf(null)
     }
 
-    // keeps track of when the map is done moving so that the visible region callback can be invoked
-    LaunchedEffect(Unit) {
-        snapshotFlow { cameraPositionState.isMoving }
-            .filter { isMoving -> !isMoving }
-            .mapNotNull { cameraPositionState.projection?.visibleRegion }
-            .onEach { onCameraMoved.invoke(it) }
-            .collect()
+    val googleMap: MutableState<GoogleMap?> = remember {
+        mutableStateOf(null)
     }
 
-    val cameraMovingState = snapshotFlow { cameraPositionState.isMoving }
-        .collectAsState(initial = false)
+    LaunchedEffect(latLngs) {
+        // the map cannot load
+        if (latLngs.isEmpty()) return@LaunchedEffect
 
-    GoogleMap(
+        val heatmap = heatmapTileProvider.value
+        if (heatmap == null) {
+            val tileProvider = HeatmapTileProvider.Builder()
+                .data(latLngs)
+                .build()
+            heatmapTileProvider.value = tileProvider
+
+            googleMap.value?.addTileOverlay(
+                TileOverlayOptions().tileProvider(tileProvider)
+            )
+        } else {
+            heatmap.setData(latLngs)
+        }
+    }
+
+    AndroidView(
         modifier = modifier,
-        cameraPositionState = cameraPositionState,
-        contentDescription = null,
-        properties = mapProperties,
-        uiSettings = mapUiSettings,
-        content = {
-            if (latLngs.isNotEmpty()) {
-                val tileProviderState = rememberTileOverlayState()
-                val tileProvider: MutableState<HeatmapTileProvider?> = remember {
-                    mutableStateOf(null)
-                }
+        factory = { context ->
+            val inflater = LayoutInflater.from(context)
+            val view = inflater.inflate(R.layout.crash_map, null, false)
+            val mapFragment: SupportMapFragment =
+                (context as FragmentActivity).supportFragmentManager
+                    .findFragmentById(R.id.crashSupportMapFragment) as SupportMapFragment
+            mapFragment.getMapAsync { map ->
+                googleMap.value = map
 
-                LaunchedEffect(latLngs) {
-                    tileProvider.value?.setData(latLngs) ?: run {
-                        tileProvider.value = HeatmapTileProvider.Builder()
-                            .data(latLngs)
-                            .build()
-                    }
+                val cameraPosition = CameraPosition.Builder()
+                    .target(LatLng(40.69, -73.89194))
+                    .zoom(10f)
+                    .build()
+                map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+                map.uiSettings.apply {
+                    this.isCompassEnabled = false
+                    this.isIndoorLevelPickerEnabled = false
+                    this.isMapToolbarEnabled = false
+                    this.isMyLocationButtonEnabled = false
+                    this.isRotateGesturesEnabled = false
+                    this.isTiltGesturesEnabled = false
+                    this.isZoomControlsEnabled = false
+                    this.isZoomGesturesEnabled = true
                 }
-
-                tileProvider.value?.let {
-                    TileOverlay(
-                        tileProvider = it,
-                        state = tileProviderState,
-                        visible = !cameraMovingState.value,
-                        fadeIn = true,
-                    )
+                map.isMyLocationEnabled = false
+                map.setOnCameraIdleListener {
+                    onCameraMoved.invoke(map.projection.visibleRegion)
                 }
             }
+
+            view
         }
     )
 }
