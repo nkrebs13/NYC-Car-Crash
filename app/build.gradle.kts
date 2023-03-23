@@ -80,7 +80,6 @@ dependencies {
     implementation(AndroidX.COMPOSE_UI)
     implementation(AndroidX.COMPOSE_MATERIAL)
     implementation(AndroidX.COMPOSE_UI_PREVIEW)
-    implementation(AndroidX.MATERIAL3)
     implementation(AndroidX.ROOM_RUNTIME)
     implementation(AndroidX.ROOM_KTX)
     implementation(AndroidX.GOOGLE_MAPS_COMPOSE)

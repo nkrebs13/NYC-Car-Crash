@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.LocalContentColor
+import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -30,7 +32,7 @@ import com.nathankrebs.nyccrash.R
 @Composable
 fun HourlyGraph(
     modifier: Modifier = Modifier,
-    hourlyEntries: List<Int>
+    hourlyEntries: List<Int>,
 ) {
     val entries: List<Entry> = remember(hourlyEntries) {
         hourlyEntries.mapIndexed { index, i ->
@@ -38,13 +40,12 @@ fun HourlyGraph(
         }
     }
 
-    val lineColor = MaterialTheme.colorScheme.primary.toArgb()
-    val textColor = MaterialTheme.typography.bodyMedium.color.toArgb()
+    val lineColor = MaterialTheme.colors.primary.toArgb()
+    val textColor = LocalTextStyle.current.color.toArgb()
     val dataLabel = stringResource(R.string.chart_data_label)
     val lineDataSet = remember(entries) {
         LineDataSet(entries, dataLabel).apply {
             color = lineColor
-            valueTextColor = textColor
             lineWidth = 2f
             setDrawCircles(false)
             setDrawValues(false)
@@ -69,14 +70,18 @@ fun HourlyGraph(
                     this.xAxis.apply {
                         valueFormatter = HourlyXAxisValueFormatter(context)
                         this.position = XAxis.XAxisPosition.BOTTOM
+                        this.textColor = textColor
                     }
 
                     this.description = Description().apply {
-                        text = context.getString(R.string.chart_description)
+                        this.text = context.getString(R.string.chart_description)
+                        this.textColor = textColor
                     }
                     this.viewPortHandler.apply {
                         extraTopOffset = 20f
                     }
+                    this.axisLeft.textColor = textColor
+                    this.axisRight.textColor = textColor
                 }
             }
         },
@@ -90,7 +95,7 @@ fun HourlyGraph(
 
 @Preview
 @Composable
-private fun HourlyGraphPreview() {
+private fun HourlyGraphPreviewLight() {
     HourlyGraph(
         modifier = Modifier
             .background(androidx.compose.ui.graphics.Color.White)
