@@ -46,7 +46,7 @@ fun HourlyGraph(
     val lineDataSet = remember(entries) {
         LineDataSet(entries, dataLabel).apply {
             color = lineColor
-            lineWidth = 2f
+            lineWidth = 10f
             setDrawCircles(false)
             setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
