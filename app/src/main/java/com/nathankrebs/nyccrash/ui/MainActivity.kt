@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.nathankrebs.nyccrash.ui.compose.AppMap
 import com.nathankrebs.nyccrash.ui.compose.HourlyGraph
+import com.nathankrebs.nyccrash.ui.compose.HourlyGraph2
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlin.math.roundToInt
@@ -70,6 +72,13 @@ class MainActivity : ComponentActivity() {
                                 yValues = yValues,
                                 paddingSpace = 32.dp,
                                 verticalStep = yStep
+                            )
+                            HourlyGraph2(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(256.dp)
+                                    .padding(16.dp),
+                                hourlyEntries = carCrashState.value.crashesByTime.toList()
                             )
 
                             Text(text = carCrashState.value.toString())

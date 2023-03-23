@@ -77,17 +77,17 @@ fun HourlyGraph(
                 )
             }
             /** placing our x axis points */
-            for (i in points.indices) {
-                val x1 = xPointDistance * i + paddingSpace.toPx()
-                val y1 = size.height - (yAxisSpace * (points[i] / verticalStep.toFloat()))
-                coordinates.add(PointF(x1, y1))
-                /** drawing circles to indicate all the points */
-                drawCircle(
-                    color = Color.Red,
-                    radius = 10f,
-                    center = Offset(x1, y1)
-                )
-            }
+//            for (i in points.indices) {
+//                val x1 = xPointDistance * i + paddingSpace.toPx()
+//                val y1 = size.height - (yAxisSpace * (points[i] / verticalStep.toFloat()))
+//                coordinates.add(PointF(x1, y1))
+//                /** drawing circles to indicate all the points */
+//                drawCircle(
+//                    color = Color.Red,
+//                    radius = 10f,
+//                    center = Offset(x1, y1)
+//                )
+//            }
             /** calculating the connection points */
             for (i in 1 until coordinates.size) {
                 controlPoints1.add(
@@ -103,32 +103,9 @@ fun HourlyGraph(
                     )
                 )
             }
-//
-//            listOf(controlPoints1, controlPoints2).forEach {
-//                it.forEach { controlPoint ->
-//                    drawCircle(
-//                        color = Color.Blue.copy(alpha = 0.7f),
-//                        radius = 7f,
-//                        center = Offset(controlPoint.x, controlPoint.y)
-//                    )
-//                }
-//            }
-            controlPoints1[1].let { controlPoint ->
-                drawCircle(
-                    color = Color.Blue.copy(alpha = 0.7f),
-                    radius = 7f,
-                    center = Offset(controlPoint.x, controlPoint.y)
-                )
-            }
-            controlPoints2[1].let { controlPoint ->
-                drawCircle(
-                    color = Color.Blue.copy(alpha = 0.7f),
-                    radius = 7f,
-                    center = Offset(controlPoint.x, controlPoint.y)
-                )
-            }
             /** drawing the path */
-            val stroke = Path().drawBezierCurve(coordinates, controlPoints1, controlPoints2)
+            if (coordinates.isNotEmpty()) {
+                val stroke = Path().drawBezierCurve(coordinates, controlPoints1, controlPoints2)
 //            val stroke = Path().apply {
 //                reset()
 //                moveTo(coordinates.first().x, coordinates.first().y)
@@ -140,32 +117,33 @@ fun HourlyGraph(
 //                    )
 //                }
 //            }
-            /** filling the area under the path */
-//            val fillPath = android.graphics.Path(stroke.asAndroidPath())
-//                .asComposePath()
-//                .apply {
-//                    lineTo(xAxisSpace * xValues.last(), size.height - yAxisSpace)
-//                    lineTo(xAxisSpace, size.height - yAxisSpace)
-//                    close()
-//                }
-//            drawPath(
-//                fillPath,
-//                brush = Brush.verticalGradient(
-//                    listOf(
-//                        Color.Cyan,
-//                        Color.Transparent,
-//                    ),
-//                    endY = size.height - yAxisSpace
-//                ),
-//            )
-            drawPath(
-                stroke,
-                color = Color.Black,
-                style = Stroke(
-                    width = 5f,
-                    cap = StrokeCap.Round
+                /** filling the area under the path */
+                val fillPath = android.graphics.Path(stroke.asAndroidPath())
+                    .asComposePath()
+                    .apply {
+                        lineTo(xPointDistance * xValues.last().toFloat(), size.height - yAxisSpace)
+                        lineTo(xPointDistance, size.height - yAxisSpace)
+                        close()
+                    }
+                drawPath(
+                    fillPath,
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            Color.Cyan,
+                            Color.Transparent,
+                        ),
+                        endY = size.height - yAxisSpace
+                    ),
                 )
-            )
+                drawPath(
+                    stroke,
+                    color = Color.Black,
+                    style = Stroke(
+                        width = 5f,
+                        cap = StrokeCap.Round
+                    )
+                )
+            }
         }
     }
 }

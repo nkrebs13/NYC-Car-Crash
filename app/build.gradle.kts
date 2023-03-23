@@ -96,6 +96,7 @@ dependencies {
     implementation(Networking.KTOR_SERIALIZATION)
     implementation(Koin.CORE)
     implementation(Koin.COMPOSE)
+    implementation(MiscLibraries.MPANDROID_CHART)
 
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
