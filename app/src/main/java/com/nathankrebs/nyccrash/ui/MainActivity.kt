@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.nathankrebs.nyccrash.ui.compose.AppMap
 import com.nathankrebs.nyccrash.ui.compose.HourlyGraph
+import com.nathankrebs.nyccrash.ui.compose.LoadingDialog
 import com.nathankrebs.nyccrash.ui.theme.NYCCrashTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -39,6 +40,10 @@ class MainActivity : ComponentActivity() {
                 val scaffoldState = rememberBottomSheetScaffoldState(
                     bottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
                 )
+
+                if(carCrashState.value.status == CarCrashViewModel.UiState.UiStatus.Loading) {
+                    LoadingDialog()
+                }
 
                 BottomSheetScaffold(
                     modifier = Modifier.fillMaxSize(),
