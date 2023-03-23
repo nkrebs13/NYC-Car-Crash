@@ -10,12 +10,17 @@ import com.nathankrebs.nyccrash.sdfISO8601
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormatSymbols
 import java.util.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,7 +46,13 @@ class CarCrashViewModel(
      * A Flow of the [UiState] of the application to be subscribed to. Updates will be published
      * as there is new data available.
      */
-    val uiState: StateFlow<UiState> =
+    val _uiState: MutableSharedFlow<UiState> = MutableSharedFlow(
+        replay = 1,
+        extraBufferCapacity = 1,
+    )
+    val uiState: Flow<UiState> = _uiState
+
+    init {
         carCrashRepository.carCrashes
             .combine(
                 currentVisibleRegion.debounce(currentVisibleRegionTimeBuffer)
@@ -69,11 +80,10 @@ class CarCrashViewModel(
                 )
             }
             .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(1_000),
-                initialValue = UiState.INITIAL
-            )
+            .onEach { _uiState.emit(it) }
+            .launchIn(viewModelScope)
+    }
+
 
     /**
      * When the map UI moves, this should be invoked with the map's current [VisibleRegion].
