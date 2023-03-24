@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.model.LatLng
@@ -64,12 +65,15 @@ private fun ExpandableHourGraph(
     dateWithMostCrashes: String?,
 ) {
     val showGraph = remember { mutableStateOf(true) }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .background(MaterialTheme.colors.background)
+            .background(
+                color = MaterialTheme.colors.primary
+                    .copy(alpha = 0.3f)
+                    .compositeOver(MaterialTheme.colors.background)
+            )
             .padding(16.dp)
             .animateContentSize(
                 animationSpec = TweenSpec(
@@ -84,11 +88,12 @@ private fun ExpandableHourGraph(
             if (dataIsLoaded) {
                 HourlyGraph(
                     modifier = Modifier
+                        .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .height(200.dp),
                     hourlyEntries = hourlyCrashes
                 )
-                if(dateWithMostCrashes != null) {
+                if (dateWithMostCrashes != null) {
                     Text(
                         modifier = Modifier,
                         style = MaterialTheme.typography.body1,
