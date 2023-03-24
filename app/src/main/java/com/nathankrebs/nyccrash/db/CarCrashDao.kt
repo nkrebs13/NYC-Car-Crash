@@ -21,4 +21,7 @@ interface CarCrashDao {
 
     @Query("SELECT * FROM CarCrashLocalItem ORDER BY date DESC LIMIT 1")
     fun getNewestCarCrashLocalItem(): CarCrashLocalItem
+
+    @Query("SELECT date FROM CarCrashLocalItem WHERE id IN (:idList) GROUP BY date HAVING COUNT(*) = (SELECT MAX(dateCount) FROM (SELECT COUNT(*) as dateCount FROM CarCrashLocalItem WHERE id IN (:idList) GROUP BY date))")
+    fun getDateWithMostCrashesForIds(idList: List<Int>): String
 }

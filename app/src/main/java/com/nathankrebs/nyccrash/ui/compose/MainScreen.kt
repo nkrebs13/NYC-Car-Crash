@@ -5,6 +5,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -31,6 +32,7 @@ fun MainScreen(
     modifier: Modifier,
     crashDataStatus: CarCrashViewModel.UiState.UiStatus,
     latLngs: List<LatLng>,
+    dateWithMostCrashes: String?,
     hourlyCrashes: List<Int>,
     onVisibleRegionChange: (VisibleRegion) -> Unit,
 ) {
@@ -41,7 +43,8 @@ fun MainScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             ExpandableHourGraph(
                 dataIsLoaded = crashDataStatus == CarCrashViewModel.UiState.UiStatus.Data,
-                hourlyCrashes = hourlyCrashes
+                hourlyCrashes = hourlyCrashes,
+                dateWithMostCrashes = dateWithMostCrashes,
             )
             AppMap(
                 modifier = Modifier
@@ -58,37 +61,45 @@ fun MainScreen(
 private fun ExpandableHourGraph(
     dataIsLoaded: Boolean,
     hourlyCrashes: List<Int>,
+    dateWithMostCrashes: String?,
 ) {
     val showGraph = remember { mutableStateOf(true) }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .background(MaterialTheme.colors.background)
+            .padding(16.dp)
             .animateContentSize(
                 animationSpec = TweenSpec(
                     durationMillis = 200,
                     easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
                 )
             ) { initialValue, targetValue -> /* no op */ }
-            .clickable { showGraph.value = !showGraph.value }
+            .clickable { showGraph.value = !showGraph.value },
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (showGraph.value) {
             if (dataIsLoaded) {
                 HourlyGraph(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(16.dp),
+                        .height(200.dp),
                     hourlyEntries = hourlyCrashes
                 )
+                if(dateWithMostCrashes != null) {
+                    Text(
+                        modifier = Modifier,
+                        style = MaterialTheme.typography.body1,
+                        text = stringResource(id = R.string.most_crashes_day, dateWithMostCrashes),
+                    )
+                }
             }
         } else {
             Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                    .fillMaxWidth(),
                 text = stringResource(R.string.collapsed_graph_prompt)
             )
         }

@@ -52,6 +52,12 @@ class CarCrashRepositoryImpl(
             .map { listOfItems -> listOfItems.map { it.toModel() } }
             .distinctUntilChanged()
 
+    override suspend fun getMostCommonCrashDate(idList: List<Int>): String {
+        return withContext(ioDispatcher) {
+            carCrashLocalDataSource.getMostCommonDate(idList)
+        }
+    }
+
     /**
      * Request the data from the remote source
      */

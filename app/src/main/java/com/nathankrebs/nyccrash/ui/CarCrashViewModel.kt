@@ -6,6 +6,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.VisibleRegion
 import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
+import com.nathankrebs.nyccrash.sdfDisplayString
 import com.nathankrebs.nyccrash.sdfISO8601
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormatSymbols
@@ -61,9 +62,15 @@ class CarCrashViewModel(
                 }
             }
             .map { newCarCrashes ->
+                val dateWithMostCrashes: Date? = sdfISO8601.parse(
+                    carCrashRepository.getMostCommonCrashDate(
+                        idList = newCarCrashes.map { it.id }
+                    )
+                )
+                val mostCrashes = dateWithMostCrashes?.let { sdfDisplayString.format(it) }
                 UiState(
                     crashesByTime = getTimes(newCarCrashes),
-                    monthWithMostCrashes = getMostDangerousMonth(newCarCrashes),
+                    dateWithMostCrashes = mostCrashes,
                     latLngs = newCarCrashes.map { LatLng(it.latitude, it.longitude) },
                     status = UiState.UiStatus.Data,
                 )
@@ -105,38 +112,19 @@ class CarCrashViewModel(
     }
 
     /**
-     * Returns a String value of the name of the month with the most number of crashes for
-     * parameter [carCrashes].
-     */
-    private fun getMostDangerousMonth(carCrashes: List<CarCrashItem>): String {
-        val months = IntArray(12)
-        // map date string (ISO8601) to Date, iterate, and then populate array indexed by month
-        carCrashes.mapNotNull { sdfISO8601.parse(it.date) }
-            .forEach { date ->
-                val calendar = Calendar.getInstance()
-                calendar.time = date
-                val monthIndex = calendar.get(Calendar.MONTH)
-                months[monthIndex] = months[monthIndex] + 1
-            }
-        // use the index of the max of the array to get the month string
-        return DateFormatSymbols(Locale.getDefault()).months[months.indexOf(months.max())]
-    }
-
-    /**
      * The UI state
      *
      * @param crashesByTime An IntArray of size 24 where each index represents an hour of the day
      * and the value represents the number of crashes in that hour. The 0th index is the 1st hour
      * of the day (12:00am - 1:00am)
      * @param latLngs The list of LatLng objects representing the location of each crash.
-     * @param monthWithMostCrashes A String value for the month that has the most crashes. This
-     * value will be null if [latLngs] is empty.
+     * @param dateWithMostCrashes A String value for the date that has the most crashes.
      * @param status The current [UiStatus] of the data
      */
     data class UiState(
         val crashesByTime: IntArray,
         val latLngs: List<LatLng>,
-        val monthWithMostCrashes: String?,
+        val dateWithMostCrashes: String?,
         val status: UiStatus,
     ) {
 
@@ -150,7 +138,7 @@ class CarCrashViewModel(
             val INITIAL = UiState(
                 crashesByTime = IntArray(24),
                 latLngs = emptyList(),
-                monthWithMostCrashes = null,
+                dateWithMostCrashes = null,
                 status = UiStatus.Loading,
             )
         }
