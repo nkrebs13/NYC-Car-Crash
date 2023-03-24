@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">NYC Crash</string>
     <string name="loading_dialog">Loading...</string>
+    <string name="collapsed_graph_prompt">Show hourly crash graph</string>
 
     <string name="chart_description">Crashes by hour in visible region</string>
     <string name="chart_data_label">Crashes</string>

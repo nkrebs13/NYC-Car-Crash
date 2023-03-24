@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -41,15 +40,16 @@ fun HourlyGraph(
     }
 
     val lineColor = MaterialTheme.colors.primary.toArgb()
-    val textColor = LocalTextStyle.current.color.toArgb()
+    val graphTextColor = LocalTextStyle.current.color.toArgb()
     val dataLabel = stringResource(R.string.chart_data_label)
     val lineDataSet = remember(entries) {
         LineDataSet(entries, dataLabel).apply {
             color = lineColor
-            lineWidth = 10f
+            lineWidth = 3f
             setDrawCircles(false)
             setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
+            valueTextColor = graphTextColor
         }
     }
 
@@ -70,18 +70,18 @@ fun HourlyGraph(
                     this.xAxis.apply {
                         valueFormatter = HourlyXAxisValueFormatter(context)
                         this.position = XAxis.XAxisPosition.BOTTOM
-                        this.textColor = textColor
+                        this.textColor = graphTextColor
                     }
 
                     this.description = Description().apply {
                         this.text = context.getString(R.string.chart_description)
-                        this.textColor = textColor
+                        this.textColor = graphTextColor
                     }
                     this.viewPortHandler.apply {
                         extraTopOffset = 20f
                     }
-                    this.axisLeft.textColor = textColor
-                    this.axisRight.textColor = textColor
+                    this.axisLeft.textColor = graphTextColor
+                    this.axisRight.textColor = graphTextColor
                 }
             }
         },

@@ -1,0 +1,96 @@
+package com.nathankrebs.nyccrash.ui.compose
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.VisibleRegion
+import com.nathankrebs.nyccrash.R
+import com.nathankrebs.nyccrash.ui.CarCrashViewModel
+
+@Composable
+fun MainScreen(
+    modifier: Modifier,
+    crashDataStatus: CarCrashViewModel.UiState.UiStatus,
+    latLngs: List<LatLng>,
+    hourlyCrashes: List<Int>,
+    onVisibleRegionChange: (VisibleRegion) -> Unit,
+) {
+    Box(modifier = modifier) {
+        if (crashDataStatus == CarCrashViewModel.UiState.UiStatus.Loading) {
+            LoadingDialog()
+        }
+        Column(modifier = Modifier.fillMaxSize()) {
+            ExpandableHourGraph(
+                dataIsLoaded = crashDataStatus == CarCrashViewModel.UiState.UiStatus.Data,
+                hourlyCrashes = hourlyCrashes
+            )
+            AppMap(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                latLngs = latLngs,
+                onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpandableHourGraph(
+    dataIsLoaded: Boolean,
+    hourlyCrashes: List<Int>,
+) {
+    val showGraph = remember { mutableStateOf(true) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .background(MaterialTheme.colors.background)
+            .animateContentSize(
+                animationSpec = TweenSpec(
+                    durationMillis = 200,
+                    easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+                )
+            ) { initialValue, targetValue -> /* no op */ }
+            .clickable { showGraph.value = !showGraph.value }
+    ) {
+        if (showGraph.value) {
+            if (dataIsLoaded) {
+                HourlyGraph(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(16.dp),
+                    hourlyEntries = hourlyCrashes
+                )
+            }
+        } else {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                text = stringResource(R.string.collapsed_graph_prompt)
+            )
+        }
+    }
+}

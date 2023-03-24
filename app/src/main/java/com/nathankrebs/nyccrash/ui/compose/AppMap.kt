@@ -2,15 +2,12 @@ package com.nathankrebs.nyccrash.ui.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.TileProvider
 import com.google.android.gms.maps.model.VisibleRegion
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -78,26 +75,29 @@ fun AppMap(
         content = {
             if (latLngs.isNotEmpty()) {
                 val tileProviderState = rememberTileOverlayState()
-                val tileProvider: MutableState<HeatmapTileProvider?> = remember {
-                    mutableStateOf(null)
+                val heatmapTileProvider = remember {
+                    HeatmapTileProvider.Builder()
+                        .data(latLngs)
+                        .build()
                 }
 
                 LaunchedEffect(latLngs) {
-                    tileProvider.value?.setData(latLngs) ?: run {
-                        tileProvider.value = HeatmapTileProvider.Builder()
-                            .data(latLngs)
-                            .build()
+                    heatmapTileProvider.setData(latLngs)
+                    try {
+                        tileProviderState.clearTileCache()
+                    } catch (e: java.lang.IllegalStateException) {
+                        // no op -- this is thrown if clearTileCache is called if the TileOverlay
+                        // hasn't been set to the map but we don't get a callback when it has been
+                        // set to the map
                     }
                 }
 
-                tileProvider.value?.let {
-                    TileOverlay(
-                        tileProvider = it,
-                        state = tileProviderState,
-                        visible = !cameraMovingState.value,
-                        fadeIn = true,
-                    )
-                }
+                TileOverlay(
+                    tileProvider = heatmapTileProvider,
+                    state = tileProviderState,
+                    visible = !cameraMovingState.value,
+                    fadeIn = true,
+                )
             }
         }
     )
