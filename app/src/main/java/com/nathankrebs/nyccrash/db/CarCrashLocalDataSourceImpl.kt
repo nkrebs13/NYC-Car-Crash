@@ -17,4 +17,8 @@ class CarCrashLocalDataSourceImpl(
     override suspend fun saveCarCrashes(carCrashes: List<CarCrashLocalItem>) {
         database.carCrashDao().insertCarCrashes(carCrashes)
     }
+
+    override suspend fun getLatestCarCrash(): CarCrashLocalItem {
+        return database.carCrashDao().getNewestCarCrashLocalItem()
+    }
 }

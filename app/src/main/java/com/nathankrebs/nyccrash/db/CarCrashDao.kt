@@ -18,4 +18,7 @@ interface CarCrashDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertCarCrashes(carCrashes: List<CarCrashLocalItem>)
+
+    @Query("SELECT * FROM CarCrashLocalItem ORDER BY date DESC LIMIT 1")
+    fun getNewestCarCrashLocalItem(): CarCrashLocalItem
 }

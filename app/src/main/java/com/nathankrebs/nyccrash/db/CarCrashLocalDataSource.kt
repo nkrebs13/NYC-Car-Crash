@@ -25,4 +25,10 @@ interface CarCrashLocalDataSource {
      * Save a new list of car crashes to the local data source
      */
     suspend fun saveCarCrashes(carCrashes: List<CarCrashLocalItem>)
+
+    /**
+     * Get the [CarCrashLocalItem] that has the latest date (ie the crash that happened most
+     * recently)
+     */
+    suspend fun getLatestCarCrash(): CarCrashLocalItem
 }
