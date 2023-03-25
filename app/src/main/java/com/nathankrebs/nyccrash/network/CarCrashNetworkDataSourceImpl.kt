@@ -1,5 +1,6 @@
 package com.nathankrebs.nyccrash.network
 
+import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -15,14 +16,19 @@ class CarCrashNetworkDataSourceImpl(
         startDate: String,
         endDate: String
     ): List<CarCrashApiItem> =
-        httpClient.get(buildUrl(startDate, endDate)) {
-            headers { append("X-App-Token", apiKey) }
-            url {
-                // default limit is 1000
-                // 20000 should be more than enough
-                parameters.append("\$limit", "20000")
-            }
-        }.body()
+        try {
+            httpClient.get(buildUrl(startDate, endDate)) {
+                headers { append("X-App-Token", apiKey) }
+                url {
+                    // default limit is 1000
+                    // 20000 should be more than enough
+                    parameters.append("\$limit", "20000")
+                }
+            }.body()
+        } catch(e: Exception) {
+            Log.e(TAG, "Error getting car crashes for dates $startDate - $endDate. Url=${buildUrl(startDate, endDate)}")
+            throw(e)
+        }
 
     /**
      * Builds out the request URL for requesting crashes between 2 specific dates
@@ -37,6 +43,7 @@ class CarCrashNetworkDataSourceImpl(
     }
 
     companion object {
+        private const val TAG = "CarCrashNetworkDataSource"
         private const val BASE_URL = "https://data.cityofnewyork.us/resource/h9gi-nx95.json"
     }
 }

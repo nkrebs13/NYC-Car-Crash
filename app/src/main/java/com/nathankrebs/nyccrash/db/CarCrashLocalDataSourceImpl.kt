@@ -21,8 +21,4 @@ class CarCrashLocalDataSourceImpl(
     override suspend fun getLatestCarCrash(): CarCrashLocalItem {
         return database.carCrashDao().getNewestCarCrashLocalItem()
     }
-
-    override suspend fun getMostCommonDate(idList: List<Int>): String {
-        return database.carCrashDao().getDateWithMostCrashesForIds(idList)
-    }
 }

@@ -10,8 +10,10 @@ import com.nathankrebs.nyccrash.sdfISO8601
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
@@ -29,32 +31,61 @@ class CarCrashRepositoryImpl(
 
     private var requestingData: Boolean = false
 
-    private var isFirstTimeGettingData = true
+    private val _carCrashes: MutableSharedFlow<Result<List<CarCrashItem>>> =
+        MutableSharedFlow(replay = 0, extraBufferCapacity = 1)
 
-    // the car crashes are driven from the "hot" flow of the local data source
-    // remote data source items are not emitted directly to simplify this reactive chain
-    override val carCrashes: Flow<List<CarCrashItem>> =
-        carCrashLocalDataSource.carCrashes
-            // if we have no data in the local data source and we're not already fetching the
-            // data, then get the data from remote and save it into the local data source.
-            .onEach { localData ->
-                if (isFirstTimeGettingData) {
-                    isFirstTimeGettingData = false
-                    if (localData.isEmpty() && !requestingData) {
-                        requestRemoteData()
-                    } else {
-                        refreshDataIfNeeded()
-                    }
+    override val carCrashes: Flow<Result<List<CarCrashItem>>> = _carCrashes
+
+    override suspend fun requestCarCrashes() {
+        withContext(ioDispatcher) {
+            // get crashes from local data source
+            val localCarCrashes = carCrashLocalDataSource.getCarCrashes()
+            // if we have crashes, just set up the local data source listener and check if we
+            // need to refresh the data
+            if (localCarCrashes.isNotEmpty()) {
+                listenForLocalSourceChanges()
+                refreshDataIfNeeded()
+            } else {
+                try {
+                    requestRemoteData()
+                    listenForLocalSourceChanges()
+                } catch (e: Exception) {
+                    _carCrashes.emit(Result.failure(e))
                 }
             }
-            // we don't want to emit prematurely since we're making requests in parallel
-            .filter { !requestingData }
+        }
+    }
+
+    /**
+     * Listens for changes from the local data source to update [_carCrashes]
+     */
+    private suspend fun listenForLocalSourceChanges() {
+        carCrashLocalDataSource.carCrashes
             .map { listOfItems -> listOfItems.map { it.toModel() } }
             .distinctUntilChanged()
+            // emit success
+            .onEach { _carCrashes.emit(Result.success(it)) }
+            // emit failure
+            .catch {
+                Log.e(TAG, "Error with car crash request", it)
+                requestingData = false
+                _carCrashes.emit(Result.failure(it))
+            }
+            .collect()
+    }
 
-    override suspend fun getMostCommonCrashDate(idList: List<Int>): String {
+    override suspend fun getMostCommonCrashDate(idList: List<Int>): String? {
         return withContext(ioDispatcher) {
-            carCrashLocalDataSource.getMostCommonDate(idList)
+            // get all car crashes
+            carCrashLocalDataSource.getCarCrashes()
+                // filter by IDs within idList
+                .filter { idList.contains(it.id) }
+                // group them by date
+                .groupBy { it.date }
+                // get the one that has the biggest list (ie the most instances of "date")
+                .maxByOrNull { it.value.size }
+                // take the first one (doesn't matter which, since we grouped them) and get the date
+                ?.value?.firstOrNull()?.date
         }
     }
 
@@ -90,7 +121,7 @@ class CarCrashRepositoryImpl(
                 endDate = endDate,
             ).mapNotNull { it.toLocalModel() }
             // now save to local data source
-            Log.d(TAG, "saved ${crashes.size} crashes for dates $startDate - $endDate")
+            Log.d(TAG, "Saved ${crashes.size} crashes for dates $startDate - $endDate")
             carCrashLocalDataSource.saveCarCrashes(crashes)
         }
     }

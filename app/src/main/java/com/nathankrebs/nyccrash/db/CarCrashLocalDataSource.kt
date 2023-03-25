@@ -31,14 +31,4 @@ interface CarCrashLocalDataSource {
      * recently)
      */
     suspend fun getLatestCarCrash(): CarCrashLocalItem
-
-    /**
-     * Returns an ISO8601 representation of a date that is in the most instances of
-     * [CarCrashLocalItem.date] where the list of [CarCrashLocalItem] is filtered to only
-     * instances with IDs contained within [idList].
-     *
-     * In other words: given a list of IDs for [CarCrashLocalItem], what is the date that had the
-     * most number of crashes?
-     */
-    suspend fun getMostCommonDate(idList: List<Int>): String
 }

@@ -36,24 +36,29 @@ fun MainScreen(
     dateWithMostCrashes: String?,
     hourlyCrashes: List<Int>,
     onVisibleRegionChange: (VisibleRegion) -> Unit,
+    onClickRetry: () -> Unit,
 ) {
-    Box(modifier = modifier) {
-        if (crashDataStatus == CarCrashViewModel.UiState.UiStatus.Loading) {
-            LoadingDialog()
-        }
-        Column(modifier = Modifier.fillMaxSize()) {
-            ExpandableHourGraph(
-                dataIsLoaded = crashDataStatus == CarCrashViewModel.UiState.UiStatus.Data,
-                hourlyCrashes = hourlyCrashes,
-                dateWithMostCrashes = dateWithMostCrashes,
-            )
-            AppMap(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(),
-                latLngs = latLngs,
-                onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
-            )
+    if(crashDataStatus == CarCrashViewModel.UiState.UiStatus.Error) {
+        ErrorUi(modifier = modifier, onClickRetry = onClickRetry)
+    } else {
+        Box(modifier = modifier) {
+            if (crashDataStatus == CarCrashViewModel.UiState.UiStatus.Loading) {
+                LoadingDialog()
+            }
+            Column(modifier = Modifier.fillMaxSize()) {
+                ExpandableHourGraph(
+                    dataIsLoaded = crashDataStatus == CarCrashViewModel.UiState.UiStatus.Data,
+                    hourlyCrashes = hourlyCrashes,
+                    dateWithMostCrashes = dateWithMostCrashes,
+                )
+                AppMap(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    latLngs = latLngs,
+                    onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
+                )
+            }
         }
     }
 }

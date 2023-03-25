@@ -3,7 +3,10 @@ package com.nathankrebs.nyccrash.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import com.nathankrebs.nyccrash.ui.compose.MainScreen
@@ -20,17 +23,20 @@ class MainActivity : ComponentActivity() {
             NYCCrashTheme {
                 val carCrashState = viewModel.uiState
                     .collectAsState(initial = CarCrashViewModel.UiState.INITIAL)
+                Surface(
+                    modifier = Modifier.background(MaterialTheme.colors.surface)
+                ) {
+                    MainScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        crashDataStatus = carCrashState.value.status,
+                        latLngs = carCrashState.value.latLngs,
+                        dateWithMostCrashes = carCrashState.value.dateWithMostCrashes,
+                        hourlyCrashes = carCrashState.value.crashesByTime.toList(),
+                        onVisibleRegionChange = { viewModel.onMapVisibleRegionChange(it) },
+                        onClickRetry = { viewModel.onClickRetryData() }
+                    )
+                }
 
-                MainScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    crashDataStatus = carCrashState.value.status,
-                    latLngs = carCrashState.value.latLngs,
-                    dateWithMostCrashes = carCrashState.value.dateWithMostCrashes,
-                    hourlyCrashes = carCrashState.value.crashesByTime.toList(),
-                    onVisibleRegionChange = {
-                        viewModel.onMapVisibleRegionChange(it)
-                    }
-                )
             }
         }
     }

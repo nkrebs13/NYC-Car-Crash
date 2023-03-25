@@ -1,5 +1,6 @@
 package com.nathankrebs.nyccrash.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
@@ -8,15 +9,21 @@ import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.sdfDisplayString
 import com.nathankrebs.nyccrash.sdfISO8601
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormatSymbols
 import java.util.*
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -38,12 +45,28 @@ class CarCrashViewModel(
      */
     private var currentVisibleRegionTimeBuffer = 0L
 
+    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.INITIAL)
+
     /**
      * A Flow of the [UiState] of the application to be subscribed to. Updates will be published
      * as there is new data available.
      */
-    val uiState: StateFlow<UiState> =
+    val uiState: StateFlow<UiState> = _uiState
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(1_000),
+            initialValue = UiState.INITIAL
+        )
+
+    init {
         carCrashRepository.carCrashes
+            .onEach {
+                Log.d(TAG, "received")
+                if (it.isFailure) {
+                    _uiState.emit(_uiState.value.copy(status = UiState.UiStatus.Error))
+                }
+            }
+            .mapNotNull { it.getOrNull() }
             .combine(
                 currentVisibleRegion.debounce(currentVisibleRegionTimeBuffer)
             ) { newCarCrashes, newLayoutBounds ->
@@ -62,12 +85,16 @@ class CarCrashViewModel(
                 }
             }
             .map { newCarCrashes ->
-                val dateWithMostCrashes: Date? = sdfISO8601.parse(
-                    carCrashRepository.getMostCommonCrashDate(
-                        idList = newCarCrashes.map { it.id }
-                    )
-                )
-                val mostCrashes = dateWithMostCrashes?.let { sdfDisplayString.format(it) }
+                val mostCrashes: String? = try {
+                    carCrashRepository.getMostCommonCrashDate(idList = newCarCrashes.map { it.id })
+                        ?.let {
+                            sdfISO8601.parse(it)
+                        }
+                        ?.let { sdfDisplayString.format(it) }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error getting the most common crash date", e)
+                    null
+                }
                 UiState(
                     crashesByTime = getTimes(newCarCrashes),
                     dateWithMostCrashes = mostCrashes,
@@ -75,12 +102,18 @@ class CarCrashViewModel(
                     status = UiState.UiStatus.Data,
                 )
             }
+            .catch {
+                Log.e(TAG, "error", it)
+                _uiState.emit(_uiState.value.copy(status = UiState.UiStatus.Error))
+            }
             .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(1_000),
-                initialValue = UiState.INITIAL
-            )
+            .onEach { _uiState.emit(it) }
+            .launchIn(viewModelScope)
+
+        viewModelScope.launch {
+            carCrashRepository.requestCarCrashes()
+        }
+    }
 
     /**
      * When the map UI moves, this should be invoked with the map's current [VisibleRegion].
@@ -88,6 +121,18 @@ class CarCrashViewModel(
     fun onMapVisibleRegionChange(visibleRegion: VisibleRegion) {
         viewModelScope.launch {
             currentVisibleRegion.emit(visibleRegion)
+        }
+    }
+
+    /**
+     * Retry fetching the data from the repository
+     */
+    fun onClickRetryData() {
+        viewModelScope.launch {
+            _uiState.emit(
+                _uiState.value.copy(status = UiState.UiStatus.Loading)
+            )
+            carCrashRepository.requestCarCrashes()
         }
     }
 
@@ -142,5 +187,9 @@ class CarCrashViewModel(
                 status = UiStatus.Loading,
             )
         }
+    }
+
+    companion object {
+        private const val TAG = "CarCrashVM"
     }
 }
