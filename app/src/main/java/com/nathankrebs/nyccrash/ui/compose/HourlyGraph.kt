@@ -82,6 +82,7 @@ fun HourlyGraph(
                     }
                     this.axisLeft.textColor = graphTextColor
                     this.axisRight.textColor = graphTextColor
+                    this.legend.textColor = graphTextColor
                 }
             }
         },

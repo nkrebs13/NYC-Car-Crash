@@ -5,6 +5,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -27,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.VisibleRegion
 import com.nathankrebs.nyccrash.R
 import com.nathankrebs.nyccrash.ui.CarCrashViewModel
+import com.nathankrebs.nyccrash.ui.theme.statusBarColor
 
 @Composable
 fun MainScreen(
@@ -63,6 +67,20 @@ fun MainScreen(
     }
 }
 
+
+private val gradientAlpha: Float
+    @Composable
+    get() = when {
+            isSystemInDarkTheme() -> 0.6f
+            else -> 0.4f
+        }
+
+private val gradientColorEnd: Color
+    @Composable
+    get() = MaterialTheme.colors.primary
+        .copy(alpha = gradientAlpha)
+        .compositeOver(MaterialTheme.colors.background)
+
 @Composable
 private fun ExpandableHourGraph(
     dataIsLoaded: Boolean,
@@ -75,18 +93,16 @@ private fun ExpandableHourGraph(
             .fillMaxWidth()
             .wrapContentHeight()
             .background(
-                color = MaterialTheme.colors.primary
-                    .copy(alpha = 0.3f)
-                    .compositeOver(MaterialTheme.colors.background)
+                brush = Brush.verticalGradient(colors = listOf(statusBarColor, gradientColorEnd))
             )
+            .clickable { showGraph.value = !showGraph.value }
             .padding(16.dp)
             .animateContentSize(
                 animationSpec = TweenSpec(
                     durationMillis = 200,
                     easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
                 )
-            ) { initialValue, targetValue -> /* no op */ }
-            .clickable { showGraph.value = !showGraph.value },
+            ) { initialValue, targetValue -> /* no op */ },
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (showGraph.value) {
