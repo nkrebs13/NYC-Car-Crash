@@ -113,6 +113,13 @@ class CarCrashRepositoryImpl(
         requestingData = false
     }
 
+    /**
+     * Requests data from [carCrashNetworkDataSource] within a given date range and saves the
+     * results into [carCrashLocalDataSource].
+     *
+     * @param startDate The start of the date range to request the data
+     * @param endDate The end of the date rnage to request the data
+     */
     private suspend fun requestAndSaveDataBeteenTwoDates(startDate: String, endDate: String) {
         withContext(ioDispatcher) {
             // request crashes for a particular month
@@ -126,6 +133,13 @@ class CarCrashRepositoryImpl(
         }
     }
 
+    /**
+     * Requests new data if the most recent car crash in the database is more than
+     * [STALE_DATA_DAYS] before today. If this is determined to be true, data is requested with
+     * the date range being:
+     * * startDate: [NUM_OF_DAYS_BEFORE_LAST_TO_GET] before the latest crash date
+     * * endDate: Today
+     */
     private suspend fun refreshDataIfNeeded() {
         withContext(ioDispatcher) {
             // is data stale?
