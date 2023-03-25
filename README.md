@@ -31,3 +31,5 @@ These is currently an issue using `TileOverlay` with Jetpack Compose that result
 issues and inconsistent loading of the map areas. Zoom in and out of the map can fix the map loading
 issues. The performance issues can be slightly improved by ensuring to launch the "release" mode of
 the application.
+
+![Screenshot](https://i.imgur.com/CPeV4N6.png)
