@@ -20,9 +20,13 @@ guidelines.
 - [Room](https://developer.android.com/training/data-storage/room) for on-device local storage
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) for UI
 - [Koin](https://insert-koin.io/) for dependency injection
-- [Coroutines + Flow](https://kotlinlang.org/docs/coroutines-overview.html) for asynchronous operations
+- [Coroutines + Flow](https://kotlinlang.org/docs/coroutines-overview.html) for asynchronous
+  operations
 - [Ktor](https://ktor.io/) for networking
-- [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart) for charting 
+- [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart) for charting
+
+Diagram of data flow:
+![Diagram](https://i.imgur.com/xQUUfPf.png)
 
 | Light Mode | Dark Mode |
 | :---: | :---: |
