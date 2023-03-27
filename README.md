@@ -17,13 +17,16 @@ guidelines.
 ### Tech Stack
 
 - MVVM app architecture
-- Room
-- Jetpack Compose
-- Koin
-- Coroutines + Flow
-- Ktor
-- Android
-- MPAndroidChart
+- [Room](https://developer.android.com/training/data-storage/room) for on-device local storage
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) for UI
+- [Koin](https://insert-koin.io/) for dependency injection
+- [Coroutines + Flow](https://kotlinlang.org/docs/coroutines-overview.html) for asynchronous operations
+- [Ktor](https://ktor.io/) for networking
+- [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart) for charting 
+
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![Screenshot](https://i.imgur.com/6Acntr3.png) | ![Screenshot](https://i.imgur.com/OF2Ru3x.png) |
 
 ### Known issues
 
@@ -31,5 +34,3 @@ These is currently an issue using `TileOverlay` with Jetpack Compose that result
 issues and inconsistent loading of the map areas. Zoom in and out of the map can fix the map loading
 issues. The performance issues can be slightly improved by ensuring to launch the "release" mode of
 the application.
-
-![Screenshot](https://i.imgur.com/CPeV4N6.png)
