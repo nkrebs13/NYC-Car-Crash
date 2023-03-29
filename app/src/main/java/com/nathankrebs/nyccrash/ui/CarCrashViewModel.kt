@@ -61,54 +61,38 @@ class CarCrashViewModel(
         )
 
     init {
+        // Updates the state as needed
         carCrashRepository.carCrashes
+            // emit the error state if there's a failure
             .onEach {
-                Log.d(TAG, "received")
                 if (it.isFailure) {
                     _uiState.emit(_uiState.value.copy(status = UiState.UiStatus.Error))
                 }
             }
+            // try to get the non-null, successful value
+            // if it's a failure, this will return null and be filtered by the mapNotNull
             .mapNotNull { it.getOrNull() }
-            .combine(
-                currentVisibleRegion.debounce(currentVisibleRegionTimeBuffer)
-            ) { newCarCrashes, newLayoutBounds ->
+            // combine the most recent visible region with the most recent car crash data
+            .combine(currentVisibleRegion.debounce(currentVisibleRegionTimeBuffer)) { newCarCrashes, newLayoutBounds ->
                 // update this value now that we actually have our first combination of values
                 currentVisibleRegionTimeBuffer = 1000
-
-                // if we have no layout bounds, return all
-                // if we have layout bounds, filter by what is visible
-                when {
-                    newLayoutBounds == null -> newCarCrashes
-                    else -> {
-                        newCarCrashes.filter {
-                            newLayoutBounds.latLngBounds.contains(LatLng(it.latitude, it.longitude))
-                        }
-                    }
-                }
+                getCrashesInVisibleRegion(newLayoutBounds, newCarCrashes)
             }
             .map { newCarCrashes ->
-                val mostCrashes: String? = withContext(Dispatchers.IO) {
-                    try {
-                        carCrashRepository.getMostCommonCrashDate(idList = newCarCrashes.map { it.id })
-                            ?.let { sdfISO8601.parse(it) }
-                            ?.let { sdfDisplayString.format(it) }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error getting the most common crash date", e)
-                        null
-                    }
-                }
                 UiState(
                     crashesByTime = getTimes(newCarCrashes),
-                    dateWithMostCrashes = mostCrashes,
+                    dateWithMostCrashes = getDateWithMostCrashes(newCarCrashes),
                     latLngs = newCarCrashes.map { LatLng(it.latitude, it.longitude) },
                     status = UiState.UiStatus.Data,
                 )
             }
+            // catch any errors that occur
             .catch {
                 Log.e(TAG, "error", it)
                 _uiState.emit(_uiState.value.copy(status = UiState.UiStatus.Error))
             }
             .distinctUntilChanged()
+            // update the state
             .onEach { _uiState.emit(it) }
             .launchIn(viewModelScope)
 
@@ -159,6 +143,40 @@ class CarCrashViewModel(
             }
         return hours
     }
+
+
+    /**
+     * Returns a list of [CarCrashItem] where the parameter [carCrashes] is filtered by
+     * [visibleRegion] such that the returned list will only be crashes within that region. If
+     * [visibleRegion] is null, then the parameter [carCrashes] is returned.
+     */
+    private fun getCrashesInVisibleRegion(
+        visibleRegion: VisibleRegion?,
+        carCrashes: List<CarCrashItem>
+    ): List<CarCrashItem> = when {
+        visibleRegion == null -> carCrashes
+        else -> {
+            carCrashes.filter {
+                visibleRegion.latLngBounds.contains(LatLng(it.latitude, it.longitude))
+            }
+        }
+    }
+
+    /**
+     * Returns a formatted date string of the date with the most number of [CarCrashItem.date]
+     * values.
+     */
+    private suspend fun getDateWithMostCrashes(carCrashes: List<CarCrashItem>): String? =
+        withContext(Dispatchers.IO) {
+            try {
+                carCrashRepository.getMostCommonCrashDate(idList = carCrashes.map { it.id })
+                    ?.let { sdfISO8601.parse(it) }
+                    ?.let { sdfDisplayString.format(it) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error getting the most common crash date", e)
+                null
+            }
+        }
 
     /**
      * The UI state
