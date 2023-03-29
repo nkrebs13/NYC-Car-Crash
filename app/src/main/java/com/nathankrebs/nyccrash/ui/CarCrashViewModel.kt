@@ -9,6 +9,7 @@ import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.sdfDisplayString
 import com.nathankrebs.nyccrash.sdfISO8601
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormatSymbols
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CarCrashViewModel(
     private val carCrashRepository: CarCrashRepository,
@@ -85,15 +87,15 @@ class CarCrashViewModel(
                 }
             }
             .map { newCarCrashes ->
-                val mostCrashes: String? = try {
-                    carCrashRepository.getMostCommonCrashDate(idList = newCarCrashes.map { it.id })
-                        ?.let {
-                            sdfISO8601.parse(it)
-                        }
-                        ?.let { sdfDisplayString.format(it) }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error getting the most common crash date", e)
-                    null
+                val mostCrashes: String? = withContext(Dispatchers.IO) {
+                    try {
+                        carCrashRepository.getMostCommonCrashDate(idList = newCarCrashes.map { it.id })
+                            ?.let { sdfISO8601.parse(it) }
+                            ?.let { sdfDisplayString.format(it) }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error getting the most common crash date", e)
+                        null
+                    }
                 }
                 UiState(
                     crashesByTime = getTimes(newCarCrashes),
@@ -110,7 +112,7 @@ class CarCrashViewModel(
             .onEach { _uiState.emit(it) }
             .launchIn(viewModelScope)
 
-        viewModelScope.launch {
+        viewModelScope.launch(context = Dispatchers.IO) {
             carCrashRepository.requestCarCrashes()
         }
     }
@@ -132,7 +134,9 @@ class CarCrashViewModel(
             _uiState.emit(
                 _uiState.value.copy(status = UiState.UiStatus.Loading)
             )
-            carCrashRepository.requestCarCrashes()
+            withContext(Dispatchers.IO) {
+                carCrashRepository.requestCarCrashes()
+            }
         }
     }
 
