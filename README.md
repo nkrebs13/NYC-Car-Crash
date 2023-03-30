@@ -5,6 +5,11 @@ Shows the car crashes in the last 3 months in the NYC area as reported by [NYC O
 repository demonstrates modern Android development using the latest best practices, tools, and
 guidelines.
 
+### 🚧 Under construction 🚧
+
+This app (in its current state, anyway) was made as a prompt as part of an interview process
+(read: this app was made with some self-imposed time constraints)
+
 ### Requirements
 
 - Android Studio or Android Build Tools
