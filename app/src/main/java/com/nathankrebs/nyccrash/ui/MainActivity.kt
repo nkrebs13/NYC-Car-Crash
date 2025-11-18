@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                         weightedLatLngs = carCrashState.value.weightedLatLngs,
                         visibleCrashCount = carCrashState.value.visibleCrashCount,
                         dateWithMostCrashes = carCrashState.value.dateWithMostCrashes,
-                        hourlyCrashes = carCrashState.value.crashesByTime.toList(),
+                        hourlyCrashes = carCrashState.value.crashesByTime,
                         onVisibleRegionChange = { viewModel.onMapVisibleRegionChange(it) },
                         onClickRetry = { viewModel.onClickRetryData() }
                     )
