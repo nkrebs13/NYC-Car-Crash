@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         modifier = Modifier.fillMaxSize(),
                         crashDataStatus = carCrashState.value.status,
-                        latLngs = carCrashState.value.latLngs,
+                        latLngs = carCrashState.value.allLatLngs,
                         dateWithMostCrashes = carCrashState.value.dateWithMostCrashes,
                         hourlyCrashes = carCrashState.value.crashesByTime.toList(),
                         onVisibleRegionChange = { viewModel.onMapVisibleRegionChange(it) },

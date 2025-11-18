@@ -3,6 +3,7 @@ package com.nathankrebs.nyccrash.ui.compose
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -17,12 +18,12 @@ import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberTileOverlayState
 import com.google.maps.android.heatmaps.HeatmapTileProvider
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
 
-private val cameraPositionState = CameraPosition.fromLatLngZoom(
+private val defaultCameraPosition = CameraPosition.fromLatLngZoom(
     LatLng(40.69, -73.89194), 10f
 )
 
@@ -51,19 +52,20 @@ fun AppMap(
     onCameraMoved: (VisibleRegion) -> Unit,
 ) {
     val cameraPositionState = rememberCameraPositionState {
-        position = cameraPositionState
+        position = defaultCameraPosition
     }
 
-    // keeps track of when the map is done moving so that the visible region callback can be invoked
+    // Debounce camera movement callbacks to reduce processing
     LaunchedEffect(Unit) {
         snapshotFlow { cameraPositionState.isMoving }
             .filter { isMoving -> !isMoving }
+            .debounce(100) // Small debounce to batch rapid movements
             .mapNotNull { cameraPositionState.projection?.visibleRegion }
-            .onEach { onCameraMoved.invoke(it) }
-            .collect()
+            .collectLatest { onCameraMoved.invoke(it) }
     }
 
-    val cameraMovingState = snapshotFlow { cameraPositionState.isMoving }
+    // Track if camera is currently moving (for hiding overlay during movement)
+    val isCameraMoving by snapshotFlow { cameraPositionState.isMoving }
         .collectAsState(initial = false)
 
     GoogleMap(
@@ -74,31 +76,54 @@ fun AppMap(
         uiSettings = mapUiSettings,
         content = {
             if (latLngs.isNotEmpty()) {
-                val tileProviderState = rememberTileOverlayState()
-                val heatmapTileProvider = remember {
-                    HeatmapTileProvider.Builder()
-                        .data(latLngs)
-                        .build()
-                }
-
-                LaunchedEffect(latLngs) {
-                    heatmapTileProvider.setData(latLngs)
-                    try {
-                        tileProviderState.clearTileCache()
-                    } catch (e: java.lang.IllegalStateException) {
-                        // no op -- this is thrown if clearTileCache is called if the TileOverlay
-                        // hasn't been set to the map but we don't get a callback when it has been
-                        // set to the map
-                    }
-                }
-
-                TileOverlay(
-                    tileProvider = heatmapTileProvider,
-                    state = tileProviderState,
-                    visible = !cameraMovingState.value,
-                    fadeIn = true,
+                HeatmapOverlay(
+                    latLngs = latLngs,
+                    isMoving = isCameraMoving
                 )
             }
         }
     )
 }
+
+/**
+ * Optimized heatmap overlay that minimizes tile regeneration.
+ */
+@Composable
+private fun HeatmapOverlay(
+    latLngs: List<LatLng>,
+    isMoving: Boolean,
+) {
+    val tileOverlayState = rememberTileOverlayState()
+
+    // Create and remember the HeatmapTileProvider with optimized settings
+    val heatmapTileProvider = remember(latLngs) {
+        HeatmapTileProvider.Builder()
+            .data(latLngs)
+            .radius(HEATMAP_RADIUS)
+            .opacity(HEATMAP_OPACITY)
+            .build()
+    }
+
+    // Only update provider when data actually changes (not on camera move)
+    LaunchedEffect(latLngs) {
+        // The provider is recreated with new data via remember(latLngs)
+        // Only clear cache if the overlay is already attached
+        try {
+            tileOverlayState.clearTileCache()
+        } catch (e: IllegalStateException) {
+            // Overlay not yet attached to map, ignore
+        }
+    }
+
+    TileOverlay(
+        tileProvider = heatmapTileProvider,
+        state = tileOverlayState,
+        // Hide during movement for better performance
+        visible = !isMoving,
+        fadeIn = true,
+        transparency = 0f,
+    )
+}
+
+private const val HEATMAP_RADIUS = 20
+private const val HEATMAP_OPACITY = 0.7

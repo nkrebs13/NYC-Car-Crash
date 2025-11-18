@@ -10,17 +10,13 @@ import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.sdfDisplayString
 import com.nathankrebs.nyccrash.sdfISO8601
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.text.DateFormatSymbols
-import java.util.*
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -76,13 +72,24 @@ class CarCrashViewModel(
             .combine(currentVisibleRegion.debounce(currentVisibleRegionTimeBuffer)) { newCarCrashes, newLayoutBounds ->
                 // update this value now that we actually have our first combination of values
                 currentVisibleRegionTimeBuffer = 1000
-                getCrashesInVisibleRegion(newLayoutBounds, newCarCrashes)
+                Pair(newCarCrashes, newLayoutBounds)
             }
-            .map { newCarCrashes ->
+            .map { (allCrashes, visibleRegion) ->
+                // Filter crashes for chart/stats (visible region only)
+                val crashesInRegion = getCrashesInVisibleRegion(visibleRegion, allCrashes)
+
+                // Cluster all crashes for heatmap performance
+                val clusteredLatLngs = clusterPoints(
+                    allCrashes.map { LatLng(it.latitude, it.longitude) }
+                )
+
                 UiState(
-                    crashesByTime = getTimes(newCarCrashes),
-                    dateWithMostCrashes = getDateWithMostCrashes(newCarCrashes),
-                    latLngs = newCarCrashes.map { LatLng(it.latitude, it.longitude) },
+                    crashesByTime = getTimes(crashesInRegion),
+                    dateWithMostCrashes = getDateWithMostCrashes(crashesInRegion),
+                    // Use ALL data for heatmap (clustered for performance)
+                    allLatLngs = clusteredLatLngs,
+                    // Use filtered data for stats display
+                    visibleCrashCount = crashesInRegion.size,
                     status = UiState.UiStatus.Data,
                 )
             }
@@ -121,6 +128,34 @@ class CarCrashViewModel(
             withContext(Dispatchers.IO) {
                 carCrashRepository.requestCarCrashes()
             }
+        }
+    }
+
+    /**
+     * Clusters nearby points to reduce the total number of points for better heatmap performance.
+     * Uses a simple grid-based clustering approach.
+     */
+    private fun clusterPoints(points: List<LatLng>): List<LatLng> {
+        if (points.size <= MAX_UNCLUSTERED_POINTS) return points
+
+        // Grid-based clustering: group points into cells and return centroids
+        val gridSize = CLUSTER_GRID_SIZE
+        val clusters = mutableMapOf<Pair<Int, Int>, MutableList<LatLng>>()
+
+        for (point in points) {
+            // Calculate grid cell for this point
+            val gridX = ((point.longitude + 180) / gridSize).toInt()
+            val gridY = ((point.latitude + 90) / gridSize).toInt()
+            val key = Pair(gridX, gridY)
+
+            clusters.getOrPut(key) { mutableListOf() }.add(point)
+        }
+
+        // Return centroid of each cluster
+        return clusters.values.map { clusterPoints ->
+            val avgLat = clusterPoints.sumOf { it.latitude } / clusterPoints.size
+            val avgLng = clusterPoints.sumOf { it.longitude } / clusterPoints.size
+            LatLng(avgLat, avgLng)
         }
     }
 
@@ -184,16 +219,42 @@ class CarCrashViewModel(
      * @param crashesByTime An IntArray of size 24 where each index represents an hour of the day
      * and the value represents the number of crashes in that hour. The 0th index is the 1st hour
      * of the day (12:00am - 1:00am)
-     * @param latLngs The list of LatLng objects representing the location of each crash.
+     * @param allLatLngs The list of ALL LatLng objects for the heatmap (clustered for performance).
+     * @param visibleCrashCount The number of crashes in the currently visible region.
      * @param dateWithMostCrashes A String value for the date that has the most crashes.
      * @param status The current [UiStatus] of the data
      */
     data class UiState(
         val crashesByTime: IntArray,
-        val latLngs: List<LatLng>,
+        val allLatLngs: List<LatLng>,
+        val visibleCrashCount: Int,
         val dateWithMostCrashes: String?,
         val status: UiStatus,
     ) {
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as UiState
+
+            if (!crashesByTime.contentEquals(other.crashesByTime)) return false
+            if (allLatLngs != other.allLatLngs) return false
+            if (visibleCrashCount != other.visibleCrashCount) return false
+            if (dateWithMostCrashes != other.dateWithMostCrashes) return false
+            if (status != other.status) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = crashesByTime.contentHashCode()
+            result = 31 * result + allLatLngs.hashCode()
+            result = 31 * result + visibleCrashCount
+            result = 31 * result + (dateWithMostCrashes?.hashCode() ?: 0)
+            result = 31 * result + status.hashCode()
+            return result
+        }
 
         enum class UiStatus {
             Loading,
@@ -204,7 +265,8 @@ class CarCrashViewModel(
         companion object {
             val INITIAL = UiState(
                 crashesByTime = IntArray(24),
-                latLngs = emptyList(),
+                allLatLngs = emptyList(),
+                visibleCrashCount = 0,
                 dateWithMostCrashes = null,
                 status = UiStatus.Loading,
             )
@@ -213,5 +275,16 @@ class CarCrashViewModel(
 
     companion object {
         private const val TAG = "CarCrashVM"
+
+        /**
+         * Maximum number of points before clustering kicks in
+         */
+        private const val MAX_UNCLUSTERED_POINTS = 5000
+
+        /**
+         * Grid size in degrees for clustering (smaller = more clusters = more points)
+         * 0.005 degrees is roughly 500m which works well for NYC scale
+         */
+        private const val CLUSTER_GRID_SIZE = 0.005
     }
 }
