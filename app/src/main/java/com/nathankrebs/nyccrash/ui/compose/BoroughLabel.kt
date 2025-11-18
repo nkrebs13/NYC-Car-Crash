@@ -39,8 +39,8 @@ enum class Borough {
                 // Staten Island - southwest, separate island
                 lat >= 40.49 && lat < 40.65 && lng >= -74.26 && lng < -74.05 -> STATEN_ISLAND
 
-                // Bronx - north of Manhattan (lower bound inclusive, upper bound exclusive)
-                lat >= 40.79 && lat < 40.92 && lng >= -73.93 && lng < -73.75 -> BRONX
+                // Bronx - north of Manhattan (adjusted to avoid overlap with Manhattan)
+                lat in 40.88..40.92 && lng in -73.93..-73.75 -> BRONX
 
                 // Brooklyn - south of Queens, west of JFK
                 lat >= 40.57 && lat < 40.74 && lng >= -74.05 && lng < -73.83 -> BROOKLYN
