@@ -3,6 +3,8 @@
     <string name="loading_dialog">Loading...</string>
     <string name="collapsed_graph_prompt">Show hourly crash graph</string>
     <string name="most_crashes_day">Day with most crashes: %s</string>
+    <string name="crash_count">Viewing %,d crashes in this area</string>
+    <string name="total_crash_count">Total: %,d crashes</string>
 
     <string name="chart_description">Crashes by hour in visible region</string>
     <string name="chart_data_label">Crashes</string>

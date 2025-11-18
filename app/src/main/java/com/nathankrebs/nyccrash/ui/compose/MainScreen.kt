@@ -37,6 +37,7 @@ fun MainScreen(
     modifier: Modifier,
     crashDataStatus: CarCrashViewModel.UiState.UiStatus,
     latLngs: List<LatLng>,
+    visibleCrashCount: Int,
     dateWithMostCrashes: String?,
     hourlyCrashes: List<Int>,
     onVisibleRegionChange: (VisibleRegion) -> Unit,
@@ -54,6 +55,7 @@ fun MainScreen(
                     dataIsLoaded = crashDataStatus == CarCrashViewModel.UiState.UiStatus.Data,
                     hourlyCrashes = hourlyCrashes,
                     dateWithMostCrashes = dateWithMostCrashes,
+                    visibleCrashCount = visibleCrashCount,
                 )
                 AppMap(
                     modifier = Modifier
@@ -86,6 +88,7 @@ private fun ExpandableHourGraph(
     dataIsLoaded: Boolean,
     hourlyCrashes: List<Int>,
     dateWithMostCrashes: String?,
+    visibleCrashCount: Int,
 ) {
     val showGraph = remember { mutableStateOf(true) }
     Column(
@@ -114,10 +117,18 @@ private fun ExpandableHourGraph(
                         .height(200.dp),
                     hourlyEntries = hourlyCrashes
                 )
-                if (dateWithMostCrashes != null) {
+                // Display crash count
+                if (visibleCrashCount > 0) {
                     Text(
                         modifier = Modifier,
                         style = MaterialTheme.typography.body1,
+                        text = stringResource(id = R.string.crash_count, visibleCrashCount),
+                    )
+                }
+                if (dateWithMostCrashes != null) {
+                    Text(
+                        modifier = Modifier,
+                        style = MaterialTheme.typography.body2,
                         text = stringResource(id = R.string.most_crashes_day, dateWithMostCrashes),
                     )
                 }
