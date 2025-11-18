@@ -1,45 +1,172 @@
-# NYC Crashes
+# NYC Car Crashes
 
-Shows the car crashes in the last 3 months in the NYC area as reported by [NYC OpenData]
-(https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95). This
-repository demonstrates modern Android development using the latest best practices, tools, and
-guidelines.
+An Android application that visualizes motor vehicle collision data from the last 3 months in the NYC area using data from [NYC OpenData](https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95). This repository demonstrates modern Android development using the latest best practices, tools, and guidelines.
 
-### 🚧 Under construction 🚧
+## Features
 
-This app (in its current state, anyway) was made as a prompt as part of an interview process
-(read: this app was made with some self-imposed time constraints)
+- Interactive heatmap visualization of crash locations using Google Maps
+- Hourly crash distribution chart
+- Offline-first architecture with local caching
+- Real-time data synchronization with NYC OpenData API
+- Light and dark mode support
 
-### Requirements
-
-- Android Studio or Android Build Tools
-- Create app/app.properties with 2 keys:
-    - `API_KEY` is for the crash data. This can be retrieved
-      from [data.cityofnewyork.us](https://data.cityofnewyork.us/profile/edit/developer_settings).
-    - `MAP_KEY` is an API key for Google
-      maps [docs](https://developers.google.com/maps/documentation/android-sdk/get-api-key)
-
-### Tech Stack
-
-- MVVM app architecture
-- [Room](https://developer.android.com/training/data-storage/room) for on-device local storage
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) for UI
-- [Koin](https://insert-koin.io/) for dependency injection
-- [Coroutines + Flow](https://kotlinlang.org/docs/coroutines-overview.html) for asynchronous
-  operations
-- [Ktor](https://ktor.io/) for networking
-- [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart) for charting
-
-Diagram of data flow:
-![Diagram](https://i.imgur.com/xQUUfPf.png)
+## Screenshots
 
 | Light Mode | Dark Mode |
 | :---: | :---: |
-| ![Screenshot](https://i.imgur.com/6Acntr3.png) | ![Screenshot](https://i.imgur.com/OF2Ru3x.png) |
+| ![Light Mode Screenshot](https://i.imgur.com/6Acntr3.png) | ![Dark Mode Screenshot](https://i.imgur.com/OF2Ru3x.png) |
 
-### Known issues
+## Requirements
 
-These is currently an issue using `TileOverlay` with Jetpack Compose that results in performance
-issues and inconsistent loading of the map areas. Zoom in and out of the map can fix the map loading
-issues. The performance issues can be slightly improved by ensuring to launch the "release" mode of
-the application.
+- **Android Studio**: Hedgehog (2023.1.1) or newer
+- **JDK**: 17 or higher
+- **Minimum SDK**: 26 (Android 8.0 Oreo)
+- **Target SDK**: 35 (Android 15)
+
+## Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/nkrebs13/NYC-Car-Crash.git
+cd NYC-Car-Crash
+```
+
+### 2. Configure API Keys
+
+Create a file `app/app.properties` with the following content:
+
+```properties
+api_key=YOUR_NYC_OPENDATA_API_KEY
+map_key=YOUR_GOOGLE_MAPS_API_KEY
+```
+
+**API Key Sources:**
+- **NYC OpenData API Key**: Register at [data.cityofnewyork.us](https://data.cityofnewyork.us/profile/edit/developer_settings)
+- **Google Maps API Key**: Follow the [Google Maps Android SDK documentation](https://developers.google.com/maps/documentation/android-sdk/get-api-key)
+
+### 3. Configure Release Signing (Optional)
+
+For release builds, create `keystore.properties` in the project root:
+
+```properties
+storeFile=path/to/your/keystore.jks
+storePassword=your_store_password
+keyAlias=your_key_alias
+keyPassword=your_key_password
+```
+
+### 4. Build and Run
+
+```bash
+./gradlew assembleDebug
+```
+
+Or open the project in Android Studio and click Run.
+
+## Architecture
+
+This app follows **MVVM (Model-View-ViewModel)** architecture with the **Repository pattern** for clean separation of concerns.
+
+### Architecture Diagram
+![Architecture Diagram](https://i.imgur.com/xQUUfPf.png)
+
+### Data Flow
+1. **UI Layer** (Compose) observes ViewModel state via StateFlow
+2. **ViewModel** requests data from Repository
+3. **Repository** coordinates between Network and Local data sources
+4. **Network DataSource** fetches fresh data from NYC OpenData API
+5. **Local DataSource** caches data in Room database for offline access
+
+## Tech Stack
+
+| Category | Technology | Version |
+|----------|------------|---------|
+| **Language** | Kotlin | 2.0.21 |
+| **UI Framework** | Jetpack Compose | BOM 2024.10.01 |
+| **Architecture** | MVVM + Repository | - |
+| **DI** | Koin | 4.0.0 |
+| **Database** | Room | 2.6.1 |
+| **Networking** | Ktor | 3.0.1 |
+| **Async** | Coroutines + Flow | 1.9.0 |
+| **Maps** | Google Maps Compose | 6.1.2 |
+| **Charts** | MPAndroidChart | 3.1.0 |
+| **Serialization** | Kotlinx Serialization | 1.7.3 |
+| **Build System** | Gradle | 8.7 |
+| **AGP** | Android Gradle Plugin | 8.5.2 |
+
+## Project Structure
+
+```
+app/src/main/java/com/nathankrebs/nyccrash/
+├── db/                          # Room database layer
+│   ├── entity/                  # Database entities
+│   ├── CarCrashDatabase.kt      # Room database definition
+│   ├── CarCrashDao.kt           # Data Access Object
+│   └── CarCrashLocalDataSource*.kt
+├── network/                     # Networking layer
+│   ├── CarCrashNetworkDataSource*.kt
+│   ├── CarCrashApiItem.kt       # API response model
+│   └── NetworkingSingleton.kt   # Ktor HttpClient config
+├── repository/                  # Repository pattern
+│   ├── CarCrashRepository.kt    # Interface
+│   └── CarCrashRepositoryImpl.kt
+├── ui/                          # UI Layer
+│   ├── compose/                 # Composable functions
+│   │   ├── MainScreen.kt
+│   │   ├── AppMap.kt            # Google Maps integration
+│   │   ├── HourlyGraph.kt       # Chart component
+│   │   └── ...
+│   ├── theme/                   # Material Design theme
+│   ├── MainActivity.kt          # Entry point
+│   └── CarCrashViewModel.kt     # ViewModel
+├── model/                       # Domain models
+├── AppApplication.kt            # Koin initialization
+└── appModuleDi.kt               # Dependency injection module
+```
+
+## Building
+
+### Debug Build
+```bash
+./gradlew assembleDebug
+```
+
+### Release Build
+```bash
+./gradlew assembleRelease
+```
+
+### Run Tests
+```bash
+./gradlew test                    # Unit tests
+./gradlew connectedAndroidTest    # Instrumented tests
+```
+
+### Check Dependencies
+```bash
+./gradlew dependencies
+```
+
+## Known Issues
+
+- **TileOverlay Performance**: There is a known issue using `TileOverlay` with Jetpack Compose that can result in performance issues and inconsistent loading of map areas. Workarounds:
+  - Zoom in/out of the map to refresh tile loading
+  - Use release builds for better performance
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is available for educational and demonstration purposes.
+
+## Acknowledgments
+
+- [NYC OpenData](https://opendata.cityofnewyork.us/) for providing the collision data
+- [Google Maps Platform](https://developers.google.com/maps) for mapping services

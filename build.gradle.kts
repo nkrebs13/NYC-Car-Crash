@@ -1,5 +1,6 @@
 plugins {
-    id("com.google.devtools.ksp") version "1.8.10-1.0.9" apply false
+    id("com.google.devtools.ksp") version "2.0.21-1.0.25" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version Kotlin.VERSION apply false
 }
 
 buildscript {
@@ -8,7 +9,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("com.android.tools.build:gradle:8.5.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Kotlin.VERSION}")
         classpath("org.jetbrains.kotlin:kotlin-serialization:${Kotlin.VERSION}")
     }

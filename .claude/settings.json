@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "Bash(adb:*)",
+      "Bash(git:*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep"
+    ],
+    "deny": []
+  },
+  "enabledAgents": [
+    "Explore",
+    "Plan"
+  ]
+}

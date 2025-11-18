@@ -1,21 +1,73 @@
+# macOS
 .DS_Store
+
+# Android Studio / IntelliJ IDEA
 *.iml
-.gradle
-/local.properties
-/.idea/caches/build_file_checksums.ser
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-.idea
-/build
-/captures
-.externalNativeBuild
-*/build
-/gradle-user-home/*
-*/google-services.json
-*/firebase.json
-*/keystore.properties
-*/keystore-dev.properties
-*/.apk
-*/.aab
-/app/app.properties
+.idea/
+.gradle/
+local.properties
+
+# Build outputs
+/build/
+*/build/
+*.apk
+*.aab
+*.ap_
+
+# External native build
+.externalNativeBuild/
+.cxx/
+
+# Gradle
+/gradle-user-home/
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Keystore and credentials
+*.jks
+*.keystore
+keystore.properties
+keystore-dev.properties
+signing.properties
+
+# API keys and secrets
+app/app.properties
+google-services.json
+firebase.json
+*.env
+.env.*
+
+# Test outputs
+/captures/
+*.exec
+
+# Proguard
+proguard/
+
+# Log files
+*.log
+
+# Coverage reports
+coverage/
+*.ec
+
+# Lint
+lint/outputs/
+lint/tmp/
+
+# Local configuration
+local.properties
+
+# Kotlin
+*.kotlin_module
+
+# Native
+*.so
+obj/
+
+# IDE - VSCode
+.vscode/
+
+# Generated files
+*.hprof

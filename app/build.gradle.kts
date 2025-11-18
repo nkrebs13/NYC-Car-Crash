@@ -6,6 +6,7 @@ plugins {
     kotlin("android")
     id("kotlinx-serialization")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val appProperties = Properties().apply {
@@ -54,7 +55,7 @@ android {
         }
 
         resValue("string", "api_key", apiKey)
-        manifestPlaceholders.put("MAP_KEY", mapKey)
+        manifestPlaceholders["MAP_KEY"] = mapKey
     }
 
     buildTypes {
@@ -68,19 +69,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = AndroidX.VERSION_COMPOSE_COMPILER
-    }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -91,9 +89,13 @@ dependencies {
     implementation(AndroidX.CORE)
     implementation(AndroidX.LIFECYCLE_RUNTIME)
     implementation(AndroidX.ACTIVITY_COMPOSE)
+
+    // Compose BOM
+    implementation(platform(AndroidX.COMPOSE_BOM))
     implementation(AndroidX.COMPOSE_UI)
     implementation(AndroidX.COMPOSE_MATERIAL)
     implementation(AndroidX.COMPOSE_UI_PREVIEW)
+
     implementation(AndroidX.ROOM_RUNTIME)
     implementation(AndroidX.ROOM_KTX)
     implementation(AndroidX.GOOGLE_MAPS_COMPOSE)
@@ -112,7 +114,6 @@ dependencies {
     implementation(MiscLibraries.MPANDROID_CHART)
 
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
-    debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TEST_MANIFEST)
 
     ksp(AndroidX.ROOM_COMPILER)
@@ -121,5 +122,6 @@ dependencies {
 
     androidTestImplementation(Testing.JUNIT_EXT)
     androidTestImplementation(Testing.ESPRESSO)
+    androidTestImplementation(platform(AndroidX.COMPOSE_BOM))
     androidTestImplementation(Testing.JUNIT_UI_COMPOSE)
 }
