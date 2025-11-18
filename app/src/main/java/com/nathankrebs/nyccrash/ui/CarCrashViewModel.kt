@@ -168,13 +168,13 @@ class CarCrashViewModel(
     }
 
     /**
-     * Returns an IntArray where each element represents an hour. The value is the number of
-     * crashes in that hour. The index of the array corresponds to the hour of the day (ie the
+     * Returns a List<Int> where each element represents an hour. The value is the number of
+     * crashes in that hour. The index of the list corresponds to the hour of the day (ie the
      * 0th index is the time between 12:00 midnight and 1:00am)
      */
-    private fun getTimes(carCrashes: List<CarCrashItem>): IntArray {
-        val hours = IntArray(24)
-        // iterate over crashes, parse the time, and update the hour-indexed array such that each
+    private fun getTimes(carCrashes: List<CarCrashItem>): List<Int> {
+        val hours = MutableList(24) { 0 }
+        // iterate over crashes, parse the time, and update the hour-indexed list such that each
         // hour's index is incremented for each crash
         carCrashes.map { it.time }
             .mapNotNull { timeString ->
@@ -224,7 +224,7 @@ class CarCrashViewModel(
     /**
      * The UI state
      *
-     * @param crashesByTime An IntArray of size 24 where each index represents an hour of the day
+     * @param crashesByTime A List<Int> of size 24 where each index represents an hour of the day
      * and the value represents the number of crashes in that hour. The 0th index is the 1st hour
      * of the day (12:00am - 1:00am)
      * @param weightedLatLngs The list of WeightedLatLng objects for the heatmap. Each point has
@@ -234,36 +234,12 @@ class CarCrashViewModel(
      * @param status The current [UiStatus] of the data
      */
     data class UiState(
-        val crashesByTime: IntArray,
+        val crashesByTime: List<Int>,
         val weightedLatLngs: List<WeightedLatLng>,
         val visibleCrashCount: Int,
         val dateWithMostCrashes: String?,
         val status: UiStatus,
     ) {
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as UiState
-
-            if (!crashesByTime.contentEquals(other.crashesByTime)) return false
-            if (weightedLatLngs != other.weightedLatLngs) return false
-            if (visibleCrashCount != other.visibleCrashCount) return false
-            if (dateWithMostCrashes != other.dateWithMostCrashes) return false
-            if (status != other.status) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = crashesByTime.contentHashCode()
-            result = 31 * result + weightedLatLngs.hashCode()
-            result = 31 * result + visibleCrashCount
-            result = 31 * result + (dateWithMostCrashes?.hashCode() ?: 0)
-            result = 31 * result + status.hashCode()
-            return result
-        }
 
         enum class UiStatus {
             Loading,
@@ -273,7 +249,7 @@ class CarCrashViewModel(
 
         companion object {
             val INITIAL = UiState(
-                crashesByTime = IntArray(24),
+                crashesByTime = List(24) { 0 },
                 weightedLatLngs = emptyList(),
                 visibleCrashCount = 0,
                 dateWithMostCrashes = null,
