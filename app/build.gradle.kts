@@ -14,15 +14,16 @@ val appProperties = Properties().apply {
 }
 
 val apiKey: String = (appProperties["api_key"] as? String) ?: ""
-if(apiKey.isEmpty()) {
-    throw IllegalStateException("You must input a valid api_key to the app.properties file. See " +
-            "the README for more information")
-}
-
 val mapKey: String = (appProperties["map_key"] as? String) ?: ""
-if(mapKey.isEmpty()) {
-    throw IllegalStateException("You must input a valid map_key to the app.properties file. See " +
-            "the README for more information")
+
+// Warn about missing or placeholder API keys, but allow build to proceed for CI
+if (apiKey.isEmpty() || apiKey.startsWith("CI_PLACEHOLDER")) {
+    logger.warn("WARNING: api_key is not configured. The app will not function correctly.")
+    logger.warn("See the README for information on configuring app.properties")
+}
+if (mapKey.isEmpty() || mapKey.startsWith("CI_PLACEHOLDER")) {
+    logger.warn("WARNING: map_key is not configured. Google Maps will not display correctly.")
+    logger.warn("See the README for information on configuring app.properties")
 }
 
 val keystoreProperties = Properties().apply {
