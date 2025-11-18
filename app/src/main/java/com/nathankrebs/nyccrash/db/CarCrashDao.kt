@@ -14,7 +14,7 @@ interface CarCrashDao {
     fun getAllContinuously(): Flow<List<CarCrashLocalItem>>
 
     @Query("SELECT * FROM CarCrashLocalItem")
-    fun getAll(): List<CarCrashLocalItem>
+    suspend fun getAll(): List<CarCrashLocalItem>
 
     @Query("SELECT COUNT(*) FROM CarCrashLocalItem")
     suspend fun getCount(): Int
