@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.ui.Alignment
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -57,13 +58,23 @@ fun MainScreen(
                     dateWithMostCrashes = dateWithMostCrashes,
                     visibleCrashCount = visibleCrashCount,
                 )
-                AppMap(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(),
-                    latLngs = latLngs,
-                    onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
-                )
+                        .fillMaxHeight()
+                ) {
+                    AppMap(
+                        modifier = Modifier.fillMaxSize(),
+                        latLngs = latLngs,
+                        onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
+                    )
+                    // Heatmap legend overlay
+                    HeatmapLegend(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(8.dp)
+                    )
+                }
             }
         }
     }
