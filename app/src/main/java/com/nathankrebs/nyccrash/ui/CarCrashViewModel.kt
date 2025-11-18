@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.VisibleRegion
+import com.google.maps.android.heatmaps.WeightedLatLng
 import com.nathankrebs.nyccrash.model.CarCrashItem
 import com.nathankrebs.nyccrash.repository.CarCrashRepository
 import com.nathankrebs.nyccrash.sdfDisplayString
@@ -78,16 +79,16 @@ class CarCrashViewModel(
                 // Filter crashes for chart/stats (visible region only)
                 val crashesInRegion = getCrashesInVisibleRegion(visibleRegion, allCrashes)
 
-                // Cluster all crashes for heatmap performance
-                val clusteredLatLngs = clusterPoints(
+                // Cluster all crashes for heatmap performance with weights
+                val weightedLatLngs = clusterPointsWeighted(
                     allCrashes.map { LatLng(it.latitude, it.longitude) }
                 )
 
                 UiState(
                     crashesByTime = getTimes(crashesInRegion),
                     dateWithMostCrashes = getDateWithMostCrashes(crashesInRegion),
-                    // Use ALL data for heatmap (clustered for performance)
-                    allLatLngs = clusteredLatLngs,
+                    // Use ALL data for heatmap (clustered with weights for performance)
+                    weightedLatLngs = weightedLatLngs,
                     // Use filtered data for stats display
                     visibleCrashCount = crashesInRegion.size,
                     status = UiState.UiStatus.Data,
@@ -133,29 +134,36 @@ class CarCrashViewModel(
 
     /**
      * Clusters nearby points to reduce the total number of points for better heatmap performance.
-     * Uses a simple grid-based clustering approach.
+     * Uses a grid-based clustering approach and returns WeightedLatLng with cluster size as weight.
+     * This preserves density information - larger clusters appear "hotter" on the heatmap.
      */
-    private fun clusterPoints(points: List<LatLng>): List<LatLng> {
-        if (points.size <= MAX_UNCLUSTERED_POINTS) return points
+    private fun clusterPointsWeighted(points: List<LatLng>): List<WeightedLatLng> {
+        if (points.isEmpty()) return emptyList()
 
-        // Grid-based clustering: group points into cells and return centroids
+        // For small datasets, convert directly to weighted points with weight 1.0
+        if (points.size <= MAX_UNCLUSTERED_POINTS) {
+            return points.map { WeightedLatLng(it, 1.0) }
+        }
+
+        // Grid-based clustering: group points into cells
         val gridSize = CLUSTER_GRID_SIZE
-        val clusters = mutableMapOf<Pair<Int, Int>, MutableList<LatLng>>()
+        val clusters = mutableMapOf<Long, MutableList<LatLng>>()
 
         for (point in points) {
-            // Calculate grid cell for this point
+            // Calculate grid cell for this point using a single long key for better performance
             val gridX = ((point.longitude + 180) / gridSize).toInt()
             val gridY = ((point.latitude + 90) / gridSize).toInt()
-            val key = Pair(gridX, gridY)
+            val key = (gridX.toLong() shl 32) or (gridY.toLong() and 0xFFFFFFFFL)
 
             clusters.getOrPut(key) { mutableListOf() }.add(point)
         }
 
-        // Return centroid of each cluster
+        // Return centroid of each cluster with cluster size as weight
         return clusters.values.map { clusterPoints ->
             val avgLat = clusterPoints.sumOf { it.latitude } / clusterPoints.size
             val avgLng = clusterPoints.sumOf { it.longitude } / clusterPoints.size
-            LatLng(avgLat, avgLng)
+            // Use cluster size as weight - more points = higher intensity
+            WeightedLatLng(LatLng(avgLat, avgLng), clusterPoints.size.toDouble())
         }
     }
 
@@ -219,14 +227,15 @@ class CarCrashViewModel(
      * @param crashesByTime An IntArray of size 24 where each index represents an hour of the day
      * and the value represents the number of crashes in that hour. The 0th index is the 1st hour
      * of the day (12:00am - 1:00am)
-     * @param allLatLngs The list of ALL LatLng objects for the heatmap (clustered for performance).
+     * @param weightedLatLngs The list of WeightedLatLng objects for the heatmap. Each point has
+     * a weight representing the number of crashes at that location (after clustering).
      * @param visibleCrashCount The number of crashes in the currently visible region.
      * @param dateWithMostCrashes A String value for the date that has the most crashes.
      * @param status The current [UiStatus] of the data
      */
     data class UiState(
         val crashesByTime: IntArray,
-        val allLatLngs: List<LatLng>,
+        val weightedLatLngs: List<WeightedLatLng>,
         val visibleCrashCount: Int,
         val dateWithMostCrashes: String?,
         val status: UiStatus,
@@ -239,7 +248,7 @@ class CarCrashViewModel(
             other as UiState
 
             if (!crashesByTime.contentEquals(other.crashesByTime)) return false
-            if (allLatLngs != other.allLatLngs) return false
+            if (weightedLatLngs != other.weightedLatLngs) return false
             if (visibleCrashCount != other.visibleCrashCount) return false
             if (dateWithMostCrashes != other.dateWithMostCrashes) return false
             if (status != other.status) return false
@@ -249,7 +258,7 @@ class CarCrashViewModel(
 
         override fun hashCode(): Int {
             var result = crashesByTime.contentHashCode()
-            result = 31 * result + allLatLngs.hashCode()
+            result = 31 * result + weightedLatLngs.hashCode()
             result = 31 * result + visibleCrashCount
             result = 31 * result + (dateWithMostCrashes?.hashCode() ?: 0)
             result = 31 * result + status.hashCode()
@@ -265,7 +274,7 @@ class CarCrashViewModel(
         companion object {
             val INITIAL = UiState(
                 crashesByTime = IntArray(24),
-                allLatLngs = emptyList(),
+                weightedLatLngs = emptyList(),
                 visibleCrashCount = 0,
                 dateWithMostCrashes = null,
                 status = UiStatus.Loading,

@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.VisibleRegion
+import com.google.maps.android.heatmaps.WeightedLatLng
 import com.nathankrebs.nyccrash.R
 import com.nathankrebs.nyccrash.ui.CarCrashViewModel
 import com.nathankrebs.nyccrash.ui.theme.statusBarColor
@@ -40,7 +41,7 @@ import com.nathankrebs.nyccrash.ui.theme.statusBarColor
 fun MainScreen(
     modifier: Modifier,
     crashDataStatus: CarCrashViewModel.UiState.UiStatus,
-    latLngs: List<LatLng>,
+    weightedLatLngs: List<WeightedLatLng>,
     visibleCrashCount: Int,
     dateWithMostCrashes: String?,
     hourlyCrashes: List<Int>,
@@ -72,7 +73,7 @@ fun MainScreen(
                 ) {
                     AppMap(
                         modifier = Modifier.fillMaxSize(),
-                        latLngs = latLngs,
+                        weightedLatLngs = weightedLatLngs,
                         onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
                         onCameraPositionChanged = { cameraInfo ->
                             mapCenter = cameraInfo.center

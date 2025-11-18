@@ -1,5 +1,6 @@
 package com.nathankrebs.nyccrash.ui.compose
 
+import android.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,7 +18,9 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberTileOverlayState
+import com.google.maps.android.heatmaps.Gradient
 import com.google.maps.android.heatmaps.HeatmapTileProvider
+import com.google.maps.android.heatmaps.WeightedLatLng
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
@@ -45,6 +48,17 @@ private val mapProperties = MapProperties(
     mapType = MapType.NORMAL
 )
 
+// Optimized gradient with fewer color stops for faster rendering
+private val heatmapGradient = Gradient(
+    intArrayOf(
+        Color.rgb(0, 255, 0),    // Green (low)
+        Color.rgb(255, 255, 0),  // Yellow
+        Color.rgb(255, 128, 0),  // Orange
+        Color.rgb(255, 0, 0)     // Red (high)
+    ),
+    floatArrayOf(0.2f, 0.5f, 0.8f, 1.0f)
+)
+
 /**
  * Data class representing camera position info for UI purposes
  */
@@ -56,7 +70,7 @@ data class CameraInfo(
 @Composable
 fun AppMap(
     modifier: Modifier = Modifier,
-    latLngs: List<LatLng>,
+    weightedLatLngs: List<WeightedLatLng>,
     onCameraMoved: (VisibleRegion) -> Unit,
     onCameraPositionChanged: (CameraInfo) -> Unit = {},
 ) {
@@ -68,7 +82,7 @@ fun AppMap(
     LaunchedEffect(Unit) {
         snapshotFlow { cameraPositionState.isMoving }
             .filter { isMoving -> !isMoving }
-            .debounce(100) // Small debounce to batch rapid movements
+            .debounce(150) // Increased debounce for better batching
             .mapNotNull { cameraPositionState.projection?.visibleRegion }
             .collectLatest { onCameraMoved.invoke(it) }
     }
@@ -76,7 +90,7 @@ fun AppMap(
     // Track and report camera position changes
     LaunchedEffect(Unit) {
         snapshotFlow { cameraPositionState.position }
-            .debounce(100)
+            .debounce(150)
             .collectLatest { position ->
                 onCameraPositionChanged(CameraInfo(position.target, position.zoom))
             }
@@ -93,9 +107,9 @@ fun AppMap(
         properties = mapProperties,
         uiSettings = mapUiSettings,
         content = {
-            if (latLngs.isNotEmpty()) {
+            if (weightedLatLngs.isNotEmpty()) {
                 HeatmapOverlay(
-                    latLngs = latLngs,
+                    weightedLatLngs = weightedLatLngs,
                     isMoving = isCameraMoving
                 )
             }
@@ -105,27 +119,29 @@ fun AppMap(
 
 /**
  * Optimized heatmap overlay that minimizes tile regeneration.
+ * Uses WeightedLatLng for better density representation.
  */
 @Composable
 private fun HeatmapOverlay(
-    latLngs: List<LatLng>,
+    weightedLatLngs: List<WeightedLatLng>,
     isMoving: Boolean,
 ) {
     val tileOverlayState = rememberTileOverlayState()
 
-    // Create and remember the HeatmapTileProvider with optimized settings
-    val heatmapTileProvider = remember(latLngs) {
+    // Create HeatmapTileProvider with weighted data and optimized settings
+    // Using remember with size as additional key to avoid unnecessary recreation
+    val dataSize = weightedLatLngs.size
+    val heatmapTileProvider = remember(dataSize, weightedLatLngs) {
         HeatmapTileProvider.Builder()
-            .data(latLngs)
+            .weightedData(weightedLatLngs)
             .radius(HEATMAP_RADIUS)
             .opacity(HEATMAP_OPACITY)
+            .gradient(heatmapGradient)
             .build()
     }
 
-    // Only update provider when data actually changes (not on camera move)
-    LaunchedEffect(latLngs) {
-        // The provider is recreated with new data via remember(latLngs)
-        // Only clear cache if the overlay is already attached
+    // Only clear cache when data actually changes
+    LaunchedEffect(dataSize) {
         try {
             tileOverlayState.clearTileCache()
         } catch (e: IllegalStateException) {
@@ -143,5 +159,5 @@ private fun HeatmapOverlay(
     )
 }
 
-private const val HEATMAP_RADIUS = 20
-private const val HEATMAP_OPACITY = 0.7
+private const val HEATMAP_RADIUS = 25 // Slightly larger radius for smoother appearance
+private const val HEATMAP_OPACITY = 0.75

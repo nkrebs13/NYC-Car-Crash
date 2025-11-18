@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         modifier = Modifier.fillMaxSize(),
                         crashDataStatus = carCrashState.value.status,
-                        latLngs = carCrashState.value.allLatLngs,
+                        weightedLatLngs = carCrashState.value.weightedLatLngs,
                         visibleCrashCount = carCrashState.value.visibleCrashCount,
                         dateWithMostCrashes = carCrashState.value.dateWithMostCrashes,
                         hourlyCrashes = carCrashState.value.crashesByTime.toList(),
