@@ -39,7 +39,9 @@ interface CarCrashDao {
     suspend fun getMostCommonDateForIdsInternal(ids: List<Int>): String?
 
     /**
-     * Safe version of getMostCommonDateForIds that handles large id lists by batching.
+     * Batching method to get the most common date among crashes with the given IDs.
+     * This method processes large ID lists in batches to avoid SQLite's parameter limit,
+     * and uses getMostCommonDateForIdsInternal as the internal query method.
      * Returns the date string that appears most frequently among all ids, or null if no matches found.
      */
     suspend fun getMostCommonDateForIds(ids: List<Int>): String? {
