@@ -10,6 +10,11 @@
     <string name="legend_low">Low</string>
     <string name="legend_high">High</string>
     <string name="legend_title">Crash Density</string>
+    <string name="borough_manhattan">Manhattan</string>
+    <string name="borough_brooklyn">Brooklyn</string>
+    <string name="borough_queens">Queens</string>
+    <string name="borough_bronx">The Bronx</string>
+    <string name="borough_staten_island">Staten Island</string>
 
     <string name="chart_description">Crashes by hour in visible region</string>
     <string name="chart_data_label">Crashes</string>

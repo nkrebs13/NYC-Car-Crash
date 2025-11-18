@@ -45,11 +45,20 @@ private val mapProperties = MapProperties(
     mapType = MapType.NORMAL
 )
 
+/**
+ * Data class representing camera position info for UI purposes
+ */
+data class CameraInfo(
+    val center: LatLng,
+    val zoom: Float
+)
+
 @Composable
 fun AppMap(
     modifier: Modifier = Modifier,
     latLngs: List<LatLng>,
     onCameraMoved: (VisibleRegion) -> Unit,
+    onCameraPositionChanged: (CameraInfo) -> Unit = {},
 ) {
     val cameraPositionState = rememberCameraPositionState {
         position = defaultCameraPosition
@@ -62,6 +71,15 @@ fun AppMap(
             .debounce(100) // Small debounce to batch rapid movements
             .mapNotNull { cameraPositionState.projection?.visibleRegion }
             .collectLatest { onCameraMoved.invoke(it) }
+    }
+
+    // Track and report camera position changes
+    LaunchedEffect(Unit) {
+        snapshotFlow { cameraPositionState.position }
+            .debounce(100)
+            .collectLatest { position ->
+                onCameraPositionChanged(CameraInfo(position.target, position.zoom))
+            }
     }
 
     // Track if camera is currently moving (for hiding overlay during movement)

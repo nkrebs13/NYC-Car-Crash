@@ -19,8 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -58,6 +61,10 @@ fun MainScreen(
                     dateWithMostCrashes = dateWithMostCrashes,
                     visibleCrashCount = visibleCrashCount,
                 )
+                // Track camera position for borough label
+                var mapCenter by remember { mutableStateOf<LatLng?>(null) }
+                var zoomLevel by remember { mutableFloatStateOf(10f) }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -67,8 +74,20 @@ fun MainScreen(
                         modifier = Modifier.fillMaxSize(),
                         latLngs = latLngs,
                         onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
+                        onCameraPositionChanged = { cameraInfo ->
+                            mapCenter = cameraInfo.center
+                            zoomLevel = cameraInfo.zoom
+                        }
                     )
-                    // Heatmap legend overlay
+                    // Borough label overlay (top-right)
+                    BoroughLabel(
+                        mapCenter = mapCenter,
+                        zoomLevel = zoomLevel,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                    )
+                    // Heatmap legend overlay (bottom-left)
                     HeatmapLegend(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
