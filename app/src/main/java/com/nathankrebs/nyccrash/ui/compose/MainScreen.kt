@@ -48,7 +48,7 @@ fun MainScreen(
     onVisibleRegionChange: (VisibleRegion) -> Unit,
     onClickRetry: () -> Unit,
 ) {
-    if(crashDataStatus == CarCrashViewModel.UiState.UiStatus.Error) {
+    if (crashDataStatus == CarCrashViewModel.UiState.UiStatus.Error) {
         ErrorUi(modifier = modifier, onClickRetry = onClickRetry)
     } else {
         Box(modifier = modifier) {
@@ -74,7 +74,7 @@ fun MainScreen(
                     AppMap(
                         modifier = Modifier.fillMaxSize(),
                         weightedLatLngs = weightedLatLngs,
-                        onCameraMoved = { visibleRegion -> onVisibleRegionChange.invoke(visibleRegion) },
+                        onCameraMoved = onVisibleRegionChange,
                         onCameraPositionChanged = { cameraInfo ->
                             mapCenter = cameraInfo.center
                             zoomLevel = cameraInfo.zoom
@@ -121,7 +121,7 @@ private fun ExpandableHourGraph(
     dateWithMostCrashes: String?,
     visibleCrashCount: Int,
 ) {
-    val showGraph = remember { mutableStateOf(true) }
+    var showGraph by remember { mutableStateOf(true) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -129,17 +129,17 @@ private fun ExpandableHourGraph(
             .background(
                 brush = Brush.verticalGradient(colors = listOf(statusBarColor, gradientColorEnd))
             )
-            .clickable { showGraph.value = !showGraph.value }
+            .clickable { showGraph = !showGraph }
             .padding(16.dp)
             .animateContentSize(
                 animationSpec = TweenSpec(
                     durationMillis = 200,
                     easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
                 )
-            ) { initialValue, targetValue -> /* no op */ },
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (showGraph.value) {
+        if (showGraph) {
             if (dataIsLoaded) {
                 HourlyGraph(
                     modifier = Modifier

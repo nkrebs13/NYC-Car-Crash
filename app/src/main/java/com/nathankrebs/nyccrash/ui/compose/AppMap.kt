@@ -129,7 +129,6 @@ private fun HeatmapOverlay(
     val tileOverlayState = rememberTileOverlayState()
 
     // Create HeatmapTileProvider with weighted data and optimized settings
-    // Using remember with size as additional key to avoid unnecessary recreation
     val dataSize = weightedLatLngs.size
     val heatmapTileProvider = remember(weightedLatLngs) {
         HeatmapTileProvider.Builder()

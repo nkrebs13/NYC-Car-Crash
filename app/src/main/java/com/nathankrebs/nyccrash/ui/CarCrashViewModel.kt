@@ -184,7 +184,7 @@ class CarCrashViewModel(
                 timeString.split(":").firstOrNull()?.toIntOrNull()
             }
             .forEach { hourOfCrash ->
-                hours[hourOfCrash] = hours[hourOfCrash] + 1
+                hours[hourOfCrash] += 1
             }
         return hours
     }
