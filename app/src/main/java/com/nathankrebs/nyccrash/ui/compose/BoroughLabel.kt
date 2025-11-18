@@ -33,20 +33,20 @@ enum class Borough {
             val lng = latLng.longitude
 
             return when {
-                // Manhattan - narrow island
-                lat in 40.70..40.88 && lng in -74.02..-73.93 -> MANHATTAN
+                // Manhattan - narrow island (upper bound exclusive to avoid overlap)
+                lat >= 40.70 && lat < 40.88 && lng >= -74.02 && lng < -73.93 -> MANHATTAN
 
                 // Staten Island - southwest, separate island
-                lat in 40.49..40.65 && lng in -74.26..-74.05 -> STATEN_ISLAND
+                lat >= 40.49 && lat < 40.65 && lng >= -74.26 && lng < -74.05 -> STATEN_ISLAND
 
-                // Bronx - north of Manhattan
-                lat in 40.79..40.92 && lng in -73.93..-73.75 -> BRONX
+                // Bronx - north of Manhattan (lower bound inclusive, upper bound exclusive)
+                lat >= 40.79 && lat < 40.92 && lng >= -73.93 && lng < -73.75 -> BRONX
 
                 // Brooklyn - south of Queens, west of JFK
-                lat in 40.57..40.74 && lng in -74.05..-73.83 -> BROOKLYN
+                lat >= 40.57 && lat < 40.74 && lng >= -74.05 && lng < -73.83 -> BROOKLYN
 
                 // Queens - east side, includes JFK/LGA
-                lat in 40.54..40.80 && lng in -73.96..-73.70 -> QUEENS
+                lat >= 40.54 && lat < 40.80 && lng >= -73.96 && lng < -73.70 -> QUEENS
 
                 else -> null
             }
