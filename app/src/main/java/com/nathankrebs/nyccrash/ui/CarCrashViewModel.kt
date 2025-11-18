@@ -153,7 +153,7 @@ class CarCrashViewModel(
             // Calculate grid cell for this point using a single long key for better performance
             val gridX = ((point.longitude + 180) / gridSize).toInt()
             val gridY = ((point.latitude + 90) / gridSize).toInt()
-            val key = (gridX.toLong() shl 32) or (gridY.toLong() and 0xFFFFFFFFL)
+            val key = (gridX.toLong() shl 32) or (gridY.toLong() and 0xFFFFFFFF)
 
             clusters.getOrPut(key) { mutableListOf() }.add(point)
         }
