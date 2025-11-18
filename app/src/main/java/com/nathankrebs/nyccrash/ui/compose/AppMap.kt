@@ -131,7 +131,7 @@ private fun HeatmapOverlay(
     // Create HeatmapTileProvider with weighted data and optimized settings
     // Using remember with size as additional key to avoid unnecessary recreation
     val dataSize = weightedLatLngs.size
-    val heatmapTileProvider = remember(dataSize, weightedLatLngs) {
+    val heatmapTileProvider = remember(weightedLatLngs) {
         HeatmapTileProvider.Builder()
             .weightedData(weightedLatLngs)
             .radius(HEATMAP_RADIUS)
