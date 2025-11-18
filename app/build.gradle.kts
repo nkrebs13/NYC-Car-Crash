@@ -9,8 +9,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val appPropertiesFile = File("${rootProject.rootDir}/app", "app.properties")
 val appProperties = Properties().apply {
-    load(FileInputStream(File("${rootProject.rootDir}/app", "app.properties")))
+    if (appPropertiesFile.exists()) {
+        load(FileInputStream(appPropertiesFile))
+    }
 }
 
 val apiKey: String = (appProperties["api_key"] as? String) ?: ""
@@ -26,20 +29,29 @@ if (mapKey.isEmpty() || mapKey.startsWith("CI_PLACEHOLDER")) {
     logger.warn("See the README for information on configuring app.properties")
 }
 
+val keystorePropertiesFile = File(rootProject.rootDir, "keystore.properties")
 val keystoreProperties = Properties().apply {
-    load(FileInputStream(File(rootProject.rootDir, "keystore.properties")))
+    if (keystorePropertiesFile.exists()) {
+        load(FileInputStream(keystorePropertiesFile))
+    }
 }
 
 android {
     namespace = "com.nathankrebs.nyccrash"
     compileSdk = AppVersions.COMPILE
 
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as? String
-            keyPassword = keystoreProperties["keyPassword"] as? String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as? String
+    // Only configure release signing if keystore.properties exists and has required values
+    val hasSigningConfig = keystorePropertiesFile.exists() &&
+        keystoreProperties["storeFile"] != null
+
+    if (hasSigningConfig) {
+        signingConfigs {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as? String
+                keyPassword = keystoreProperties["keyPassword"] as? String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as? String
+            }
         }
     }
 
@@ -66,7 +78,9 @@ android {
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (hasSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
