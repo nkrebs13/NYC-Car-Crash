@@ -148,6 +148,29 @@ app/src/main/java/com/nathankrebs/nyccrash/
 ./gradlew dependencies
 ```
 
+### Build Configuration
+
+#### Configuration Cache
+
+This project has **Gradle Configuration Cache** enabled in `gradle.properties` for faster builds. This is an incubating Gradle feature that caches the result of the configuration phase.
+
+**Compatibility Status:**
+- ✅ **KSP (Kotlin Symbol Processing)**: Fully compatible
+- ✅ **Room Database**: Compatible via KSP annotation processing
+- ✅ **Kotlin Gradle Plugin**: Fully supported
+- ✅ **Android Gradle Plugin 8.5.2**: Fully supported
+- ✅ **Compose Compiler Plugin**: Fully supported
+
+**If you encounter configuration cache issues:**
+1. Disable it temporarily by setting `org.gradle.configuration-cache=false` in `gradle.properties`
+2. Run with `--no-configuration-cache` flag: `./gradlew build --no-configuration-cache`
+3. Check the [Gradle Configuration Cache documentation](https://docs.gradle.org/current/userguide/configuration_cache.html) for troubleshooting
+
+**Known Limitations:**
+- Custom build scripts that use deprecated Gradle APIs may not be compatible
+- Some older third-party Gradle plugins may not support configuration cache
+- Build scripts with mutable shared state during configuration phase may cause issues
+
 ## Known Issues
 
 - **TileOverlay Performance**: There is a known issue using `TileOverlay` with Jetpack Compose that can result in performance issues and inconsistent loading of map areas. Workarounds:
