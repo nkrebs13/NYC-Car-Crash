@@ -36,8 +36,29 @@ interface CarCrashDao {
         ORDER BY COUNT(*) DESC
         LIMIT 1
     """)
-    suspend fun getMostCommonDateForIds(ids: List<Int>): String?
+    suspend fun getMostCommonDateForIdsInternal(ids: List<Int>): String?
 
+    /**
+     * Safe version of getMostCommonDateForIds that handles large id lists by batching.
+     * Returns the date string that appears most frequently among all ids, or null if no matches found.
+     */
+    suspend fun getMostCommonDateForIds(ids: List<Int>): String? {
+        if (ids.isEmpty()) return null
+        val batchSize = 999
+        val dateCounts = mutableMapOf<String, Int>()
+        ids.chunked(batchSize).forEach { batch ->
+            // For each batch, get all dates for the batch
+            val batchDates = getAllDatesForIds(batch)
+            batchDates.forEach { date ->
+                dateCounts[date] = (dateCounts[date] ?: 0) + 1
+            }
+        }
+        // Find the date with the highest count
+        return dateCounts.maxByOrNull { it.value }?.key
+    }
+
+    @Query("SELECT date FROM CarCrashLocalItem WHERE id IN (:ids)")
+    suspend fun getAllDatesForIds(ids: List<Int>): List<String>
     @Query("DELETE FROM CarCrashLocalItem")
     suspend fun deleteAll()
 
