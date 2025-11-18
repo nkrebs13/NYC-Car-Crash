@@ -27,9 +27,9 @@ jobs:
     - name: Create app.properties
       run: |
         # Use secrets if available, otherwise use placeholder values for CI builds
-        echo "map_key=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> app/app.properties
-        chmod 600 app/app.properties
+        API_KEY="${{ secrets.NYC_OPENDATA_API_KEY }}"
         MAP_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}"
+        chmod 600 app/app.properties
 
         # If secrets aren't configured, use placeholder values (app won't work but will compile)
         if [ -z "$API_KEY" ]; then
