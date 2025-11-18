@@ -84,7 +84,7 @@ fun AppMap(
             .debounce(150) // Increased debounce for better batching
             .filter { isMoving -> !isMoving }
             .mapNotNull { cameraPositionState.projection?.visibleRegion }
-            .collectLatest { onCameraMoved.invoke(it) }
+            .collectLatest { onCameraMoved(it) }
     }
 
     // Track and report camera position changes
