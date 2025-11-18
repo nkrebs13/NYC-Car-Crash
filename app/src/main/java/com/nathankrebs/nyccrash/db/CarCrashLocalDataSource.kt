@@ -17,9 +17,14 @@ interface CarCrashLocalDataSource {
     val carCrashes: Flow<List<CarCrashLocalItem>>
 
     /**
+     * Returns the count of all car crashes in the local data source.
+     */
+    suspend fun getCount(): Int
+
+    /**
      * Returns the list of all car crashes from the local data source.
      */
-    fun getCarCrashes(): List<CarCrashLocalItem>
+    suspend fun getCarCrashes(): List<CarCrashLocalItem>
 
     /**
      * Save a new list of car crashes to the local data source
@@ -28,7 +33,23 @@ interface CarCrashLocalDataSource {
 
     /**
      * Get the [CarCrashLocalItem] that has the latest date (ie the crash that happened most
-     * recently)
+     * recently). Returns null if no crashes exist.
      */
-    suspend fun getLatestCarCrash(): CarCrashLocalItem
+    suspend fun getLatestCarCrash(): CarCrashLocalItem?
+
+    /**
+     * Get the date that appears most frequently among crashes with IDs in the provided list.
+     * This is done efficiently via a database query.
+     */
+    suspend fun getMostCommonDateForIds(ids: List<Int>): String?
+
+    /**
+     * Delete all car crashes from the local data source.
+     */
+    suspend fun deleteAll()
+
+    /**
+     * Delete car crashes older than the specified date.
+     */
+    suspend fun deleteOlderThan(beforeDate: String)
 }

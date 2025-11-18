@@ -8,14 +8,17 @@ import com.nathankrebs.nyccrash.network.CarCrashApiItem
 import com.nathankrebs.nyccrash.network.CarCrashNetworkDataSource
 import com.nathankrebs.nyccrash.sdfISO8601
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
@@ -29,88 +32,102 @@ class CarCrashRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher,
 ) : CarCrashRepository {
 
-    private var requestingData: Boolean = false
+    private val repositoryScope = CoroutineScope(ioDispatcher + SupervisorJob())
+    private val requestMutex = Mutex()
+    private var isSubscribedToLocalSource = false
 
-    private val _carCrashes: MutableSharedFlow<Result<List<CarCrashItem>>> =
-        MutableSharedFlow(replay = 0, extraBufferCapacity = 1)
+    private val _carCrashes: MutableStateFlow<Result<List<CarCrashItem>>> =
+        MutableStateFlow(Result.success(emptyList()))
 
     override val carCrashes: Flow<Result<List<CarCrashItem>>> = _carCrashes
 
+    init {
+        // Set up the local source listener once at initialization
+        setupLocalSourceListener()
+    }
+
+    /**
+     * Sets up a listener for the local data source that runs in the repository scope.
+     * This ensures the Flow collection doesn't block the caller.
+     */
+    private fun setupLocalSourceListener() {
+        if (isSubscribedToLocalSource) return
+        isSubscribedToLocalSource = true
+
+        repositoryScope.launch {
+            carCrashLocalDataSource.carCrashes
+                .map { listOfItems -> listOfItems.map { it.toModel() } }
+                .onEach { items ->
+                    Log.d(TAG, "Local source emitted ${items.size} items")
+                    _carCrashes.emit(Result.success(items))
+                }
+                .catch { error ->
+                    Log.e(TAG, "Error observing local data source", error)
+                    _carCrashes.emit(Result.failure(error))
+                }
+                .collect { }
+        }
+    }
+
     override suspend fun requestCarCrashes() {
-        withContext(ioDispatcher) {
-            // get crashes from local data source
-            val localCarCrashes = carCrashLocalDataSource.getCarCrashes()
-            // if we have crashes, just set up the local data source listener and check if we
-            // need to refresh the data
-            if (localCarCrashes.isNotEmpty()) {
-                listenForLocalSourceChanges()
-                refreshDataIfNeeded()
-            } else {
+        // Use mutex to prevent concurrent requests
+        requestMutex.withLock {
+            withContext(ioDispatcher) {
                 try {
-                    requestRemoteData()
-                    listenForLocalSourceChanges()
+                    val localCount = carCrashLocalDataSource.getCount()
+
+                    if (localCount > 0) {
+                        // We have local data, check if we need to refresh
+                        refreshDataIfNeeded()
+                    } else {
+                        // No local data, fetch from network
+                        requestRemoteData()
+                    }
                 } catch (e: Exception) {
+                    Log.e(TAG, "Error requesting car crashes", e)
                     _carCrashes.emit(Result.failure(e))
                 }
             }
         }
     }
 
-    /**
-     * Listens for changes from the local data source to update [_carCrashes]
-     */
-    private suspend fun listenForLocalSourceChanges() {
-        carCrashLocalDataSource.carCrashes
-            .map { listOfItems -> listOfItems.map { it.toModel() } }
-            .distinctUntilChanged()
-            // emit success
-            .onEach { _carCrashes.emit(Result.success(it)) }
-            // emit failure
-            .catch {
-                Log.e(TAG, "Error with car crash request", it)
-                requestingData = false
-                _carCrashes.emit(Result.failure(it))
-            }
-            .collect()
-    }
-
     override suspend fun getMostCommonCrashDate(idList: List<Int>): String? {
+        if (idList.isEmpty()) return null
+
         return withContext(ioDispatcher) {
-            // get all car crashes
-            carCrashLocalDataSource.getCarCrashes()
-                // filter by IDs within idList
-                .filter { idList.contains(it.id) }
-                // group them by date
-                .groupBy { it.date }
-                // get the one that has the biggest list (ie the most instances of "date")
-                .maxByOrNull { it.value.size }
-                // take the first one (doesn't matter which, since we grouped them) and get the date
-                ?.value?.firstOrNull()?.date
+            try {
+                // Use efficient database query instead of loading all data into memory
+                carCrashLocalDataSource.getMostCommonDateForIds(idList)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error getting most common crash date", e)
+                null
+            }
         }
     }
 
     /**
-     * Request the data from the remote source
+     * Request the data from the remote source for the last 3 months
      */
     private suspend fun requestRemoteData() {
-        requestingData = true
+        Log.d(TAG, "Requesting remote data for last 3 months")
+
         withContext(ioDispatcher) {
-            // make request for last 3 months in parallel by leveraging the async/await of
-            // kotlin coroutines
-            val (month0, month1, month2) = LongRange(0L, 2L).map { monthIndex ->
+            // Make requests for last 3 months in parallel
+            val deferredResults = (0L..2L).map { monthIndex ->
                 async {
-                    requestAndSaveDataBeteenTwoDates(
+                    requestAndSaveDataBetweenTwoDates(
                         startDate = getDateTimeStringForMonthsAgo(monthIndex + 1),
                         endDate = getDateTimeStringForMonthsAgo(monthIndex)
                     )
                 }
             }
 
-            month0.await()
-            month1.await()
-            month2.await()
+            // Await all results
+            deferredResults.forEach { it.await() }
         }
-        requestingData = false
+
+        // Clean up old data (older than 3 months)
+        cleanupOldData()
     }
 
     /**
@@ -118,46 +135,91 @@ class CarCrashRepositoryImpl(
      * results into [carCrashLocalDataSource].
      *
      * @param startDate The start of the date range to request the data
-     * @param endDate The end of the date rnage to request the data
+     * @param endDate The end of the date range to request the data
      */
-    private suspend fun requestAndSaveDataBeteenTwoDates(startDate: String, endDate: String) {
+    private suspend fun requestAndSaveDataBetweenTwoDates(startDate: String, endDate: String) {
         withContext(ioDispatcher) {
-            // request crashes for a particular month
-            val crashes = carCrashNetworkDataSource.getCarCrashes(
-                startDate = startDate,
-                endDate = endDate,
-            ).mapNotNull { it.toLocalModel() }
-            // now save to local data source
-            Log.d(TAG, "Saved ${crashes.size} crashes for dates $startDate - $endDate")
-            carCrashLocalDataSource.saveCarCrashes(crashes)
+            try {
+                // Request crashes for a particular date range
+                val crashes = carCrashNetworkDataSource.getCarCrashes(
+                    startDate = startDate,
+                    endDate = endDate,
+                ).mapNotNull { it.toLocalModel() }
+
+                // Save to local data source
+                Log.d(TAG, "Fetched ${crashes.size} crashes for dates $startDate - $endDate")
+                carCrashLocalDataSource.saveCarCrashes(crashes)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error fetching data for $startDate - $endDate", e)
+                throw e
+            }
         }
     }
 
     /**
-     * Requests new data if the most recent car crash in the database is more than
-     * [STALE_DATA_DAYS] before today. If this is determined to be true, data is requested with
-     * the date range being:
-     * * startDate: [NUM_OF_DAYS_BEFORE_LAST_TO_GET] before the latest crash date
-     * * endDate: Today
+     * Refreshes data if the most recent crash in the database is older than [STALE_DATA_DAYS].
+     * When refreshing, fetches data from [NUM_OF_DAYS_BEFORE_LAST_TO_GET] days before the latest
+     * crash date up until today.
      */
     private suspend fun refreshDataIfNeeded() {
         withContext(ioDispatcher) {
-            // is data stale?
             val latestCarCrash = carCrashLocalDataSource.getLatestCarCrash()
-            val latestDate: Date = sdfISO8601.parse(latestCarCrash.date) ?: return@withContext
-            val numDaysBetween = Duration.between(latestDate.toInstant(), Instant.now()).toDays()
-            // if it's recent enough, then our data isn't too stale and we can just return
-            if (numDaysBetween < STALE_DATA_DAYS) return@withContext
+                ?: run {
+                    // No data found, request full data set
+                    Log.d(TAG, "No latest crash found, requesting full data")
+                    requestRemoteData()
+                    return@withContext
+                }
 
-            requestAndSaveDataBeteenTwoDates(
+            val latestDate: Date = try {
+                sdfISO8601.parse(latestCarCrash.date) ?: run {
+                    Log.e(TAG, "Could not parse date: ${latestCarCrash.date}")
+                    requestRemoteData()
+                    return@withContext
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error parsing date: ${latestCarCrash.date}", e)
+                requestRemoteData()
+                return@withContext
+            }
+
+            val numDaysBetween = Duration.between(latestDate.toInstant(), Instant.now()).toDays()
+            Log.d(TAG, "Latest crash was $numDaysBetween days ago")
+
+            // If data is recent enough, no need to refresh
+            if (numDaysBetween <= STALE_DATA_DAYS) {
+                Log.d(TAG, "Data is fresh (within $STALE_DATA_DAYS days), skipping refresh")
+                return@withContext
+            }
+
+            Log.d(TAG, "Data is stale, refreshing...")
+            requestAndSaveDataBetweenTwoDates(
                 startDate = getDateTimeStringForDaysBeforeOtherDate(otherDate = latestDate),
                 endDate = getDateTimeStringForMonthsAgo(0)
             )
+
+            // Clean up old data
+            cleanupOldData()
         }
     }
 
     /**
-     * Returns a datetime string for representing a date that is today minus [numMonthsAgo].
+     * Removes crash data older than 3 months to keep the database size manageable.
+     */
+    private suspend fun cleanupOldData() {
+        withContext(ioDispatcher) {
+            try {
+                val threeMonthsAgo = getDateTimeStringForMonthsAgo(3)
+                carCrashLocalDataSource.deleteOlderThan(threeMonthsAgo)
+                Log.d(TAG, "Cleaned up data older than $threeMonthsAgo")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error cleaning up old data", e)
+            }
+        }
+    }
+
+    /**
+     * Returns a datetime string representing a date that is today minus [numMonthsAgo].
      */
     private fun getDateTimeStringForMonthsAgo(numMonthsAgo: Long): String =
         sdfISO8601.format(
@@ -165,8 +227,8 @@ class CarCrashRepositoryImpl(
         )
 
     /**
-     * Returns a datetime string for representing a date that is [NUM_OF_DAYS_BEFORE_LAST_TO_GET]
-     * before [otherDate].
+     * Returns a datetime string representing a date that is [NUM_OF_DAYS_BEFORE_LAST_TO_GET]
+     * days before [otherDate].
      */
     private fun getDateTimeStringForDaysBeforeOtherDate(otherDate: Date): String =
         sdfISO8601.format(
@@ -178,9 +240,9 @@ class CarCrashRepositoryImpl(
 
         /**
          * The number of days after which the data is considered "stale" and more up-to-date data
-         * should be requested
+         * should be requested. Set to 1 day so data refreshes daily.
          */
-        const val STALE_DATA_DAYS = 0
+        const val STALE_DATA_DAYS = 1
 
         /**
          * The number of days before the newest crash in the database to start for our request.
@@ -192,7 +254,7 @@ class CarCrashRepositoryImpl(
          * local data source that we should use as the start of our date range when requesting
          * fresh data.
          */
-        const val NUM_OF_DAYS_BEFORE_LAST_TO_GET = 3L
+        const val NUM_OF_DAYS_BEFORE_LAST_TO_GET = 5L
     }
 }
 

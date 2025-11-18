@@ -16,9 +16,31 @@ interface CarCrashDao {
     @Query("SELECT * FROM CarCrashLocalItem")
     fun getAll(): List<CarCrashLocalItem>
 
+    @Query("SELECT COUNT(*) FROM CarCrashLocalItem")
+    suspend fun getCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertCarCrashes(carCrashes: List<CarCrashLocalItem>)
+    suspend fun insertCarCrashes(carCrashes: List<CarCrashLocalItem>)
 
     @Query("SELECT * FROM CarCrashLocalItem ORDER BY date DESC LIMIT 1")
-    fun getNewestCarCrashLocalItem(): CarCrashLocalItem
+    suspend fun getNewestCarCrashLocalItem(): CarCrashLocalItem?
+
+    /**
+     * Get the date that appears most frequently among crashes with IDs in the provided list.
+     * Returns the date string or null if no matches found.
+     */
+    @Query("""
+        SELECT date FROM CarCrashLocalItem
+        WHERE id IN (:ids)
+        GROUP BY date
+        ORDER BY COUNT(*) DESC
+        LIMIT 1
+    """)
+    suspend fun getMostCommonDateForIds(ids: List<Int>): String?
+
+    @Query("DELETE FROM CarCrashLocalItem")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM CarCrashLocalItem WHERE date < :beforeDate")
+    suspend fun deleteOlderThan(beforeDate: String)
 }
