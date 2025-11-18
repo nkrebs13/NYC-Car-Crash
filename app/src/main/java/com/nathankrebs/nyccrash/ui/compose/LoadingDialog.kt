@@ -1,6 +1,7 @@
 package com.nathankrebs.nyccrash.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,14 +32,25 @@ fun LoadingDialog() {
             color = MaterialTheme.colors.background,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CircularProgressIndicator()
-                Text(stringResource(id = R.string.loading_dialog))
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.loading_dialog),
+                        style = MaterialTheme.typography.body1
+                    )
+                    Text(
+                        text = stringResource(id = R.string.loading_dialog_detail),
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.onBackground.copy(alpha = 0.6f)
+                    )
+                }
             }
         }
-
     }
 }

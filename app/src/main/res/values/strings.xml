@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">NYC Crash</string>
-    <string name="loading_dialog">Loading...</string>
+    <string name="loading_dialog">Loading crash data…</string>
+    <string name="loading_dialog_detail">Fetching 3 months of NYC collision data</string>
+    <string name="last_updated">Updated %s</string>
     <string name="collapsed_graph_prompt">Show hourly crash graph</string>
     <string name="most_crashes_day">Day with most crashes: %s</string>
     <string name="crash_count">Viewing %,d crashes in this area</string>
