@@ -81,8 +81,8 @@ fun AppMap(
     // Debounce camera movement callbacks to reduce processing
     LaunchedEffect(Unit) {
         snapshotFlow { cameraPositionState.isMoving }
-            .filter { isMoving -> !isMoving }
             .debounce(150) // Increased debounce for better batching
+            .filter { isMoving -> !isMoving }
             .mapNotNull { cameraPositionState.projection?.visibleRegion }
             .collectLatest { onCameraMoved.invoke(it) }
     }
