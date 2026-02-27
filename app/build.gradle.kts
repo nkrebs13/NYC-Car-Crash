@@ -2,42 +2,55 @@ import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
+    id("nyccarcrash.android.app")
     kotlin("android")
     id("kotlinx-serialization")
     id("com.google.devtools.ksp")
 }
 
+val appPropertiesFile = File("${rootProject.rootDir}/app", "app.properties")
 val appProperties = Properties().apply {
-    load(FileInputStream(File("${rootProject.rootDir}/app", "app.properties")))
+    if (appPropertiesFile.exists()) {
+        load(FileInputStream(appPropertiesFile))
+    }
 }
 
 val apiKey: String = (appProperties["api_key"] as? String) ?: ""
-if(apiKey.isEmpty()) {
-    throw IllegalStateException("You must input a valid api_key to the app.properties file. See " +
-            "the README for more information")
-}
-
 val mapKey: String = (appProperties["map_key"] as? String) ?: ""
-if(mapKey.isEmpty()) {
-    throw IllegalStateException("You must input a valid map_key to the app.properties file. See " +
-            "the README for more information")
+
+// Warn about missing or placeholder API keys, but allow build to proceed for CI
+if (apiKey.isEmpty() || apiKey.startsWith("CI_PLACEHOLDER")) {
+    logger.warn("WARNING: api_key is not configured. The app will not function correctly.")
+    logger.warn("See the README for information on configuring app.properties")
+}
+if (mapKey.isEmpty() || mapKey.startsWith("CI_PLACEHOLDER")) {
+    logger.warn("WARNING: map_key is not configured. Google Maps will not display correctly.")
+    logger.warn("See the README for information on configuring app.properties")
 }
 
+val keystorePropertiesFile = File(rootProject.rootDir, "keystore.properties")
 val keystoreProperties = Properties().apply {
-    load(FileInputStream(File(rootProject.rootDir, "keystore.properties")))
+    if (keystorePropertiesFile.exists()) {
+        load(FileInputStream(keystorePropertiesFile))
+    }
 }
 
 android {
     namespace = "com.nathankrebs.nyccrash"
     compileSdk = AppVersions.COMPILE
 
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as? String
-            keyPassword = keystoreProperties["keyPassword"] as? String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as? String
+    // Only configure release signing if keystore.properties exists and has required values
+    val hasSigningConfig = keystorePropertiesFile.exists() &&
+        keystoreProperties["storeFile"] != null
+
+    if (hasSigningConfig) {
+        signingConfigs {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as? String
+                keyPassword = keystoreProperties["keyPassword"] as? String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as? String
+            }
         }
     }
 
@@ -45,8 +58,6 @@ android {
         applicationId = "com.nathankrebs.nyccrash"
         minSdk = AppVersions.MIN
         targetSdk = AppVersions.TARGET
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -54,7 +65,7 @@ android {
         }
 
         resValue("string", "api_key", apiKey)
-        manifestPlaceholders.put("MAP_KEY", mapKey)
+        manifestPlaceholders["MAP_KEY"] = mapKey
     }
 
     buildTypes {
@@ -64,15 +75,10 @@ android {
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (hasSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
@@ -111,7 +117,6 @@ dependencies {
     implementation(Koin.COMPOSE)
     implementation(MiscLibraries.MPANDROID_CHART)
 
-    debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TOOLING)
     debugImplementation(AndroidX.COMPOSE_UI_TEST_MANIFEST)
 

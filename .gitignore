@@ -11,6 +11,7 @@
 /captures
 .externalNativeBuild
 */build
+**/build
 /gradle-user-home/*
 */google-services.json
 */firebase.json

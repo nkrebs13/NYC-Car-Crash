@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'buildSrc/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'version.properties'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'buildSrc/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'version.properties'
+      - '.github/workflows/ci.yml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create app.properties
+        env:
+          API_KEY_SECRET: ${{ secrets.API_KEY }}
+          MAP_KEY_SECRET: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          API_KEY="${API_KEY_SECRET}"
+          MAP_KEY="${MAP_KEY_SECRET}"
+          if [ -z "$API_KEY" ]; then API_KEY="CI_PLACEHOLDER_API_KEY"; fi
+          if [ -z "$MAP_KEY" ]; then MAP_KEY="CI_PLACEHOLDER_MAP_KEY"; fi
+          echo "api_key=$API_KEY" > app/app.properties
+          echo "map_key=$MAP_KEY" >> app/app.properties
+
+      - name: Print version
+        run: ./gradlew :app:printVersion
+
+      - name: Run Lint
+        run: ./gradlew :app:lint
+
+      - name: Run Unit Tests
+        run: ./gradlew :app:test
+
+      - name: Build Debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload Lint Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-results
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
